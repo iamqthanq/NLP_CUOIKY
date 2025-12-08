@@ -1,0 +1,276 @@
+% ============================================
+% BÁO CÁO ĐỒ ÁN NLP - DỊCH MÁY ANH-PHÁP
+% Trường: Đại học Sài Gòn (SGU)
+% Template: Vietnamese LaTeX Report
+% Encoding: UTF-8
+% Compiler: XeLaTeX (hoặc pdfLaTeX với vietnamesepackage)
+% ============================================
+
+\documentclass[13pt,a4paper]{report}
+
+% ============================================
+% PACKAGES
+% ============================================
+
+% Tiếng Việt
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+
+% Layout và lề
+\usepackage[
+    left=3cm,
+    right=2cm,
+    top=2.5cm,
+    bottom=2.5cm
+]{geometry}
+
+% Font và text
+\usepackage{times}              % Times New Roman
+\usepackage{setspace}           % Dãn dòng
+\onehalfspacing                 % 1.5 line spacing
+
+% Toán học
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+% Hình ảnh và đồ họa
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% Bảng biểu
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{longtable}
+
+% Code listing
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Thuật toán (algorithm và algorithmic)
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Tcolorbox cho highlighted boxes
+\usepackage{tcolorbox}
+
+% Hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue,
+    pdftitle={Báo cáo đồ án NLP - Dịch máy Anh-Pháp},
+    pdfauthor={[Tên sinh viên]},
+}
+
+% Bibliography
+\usepackage[numbers,sort&compress]{natbib}
+
+% Header và footer
+\usepackage{fancyhdr}
+
+% Danh sách
+\usepackage{enumitem}
+
+% Chèn PDF
+\usepackage{pdfpages}
+
+% Symbols (cho checkmark)
+\usepackage{pifont}
+
+% ============================================
+% LISTINGS CONFIGURATION (Code highlighting)
+% ============================================
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=single,
+    xleftmargin=10pt,
+    xrightmargin=10pt,
+}
+
+\lstset{style=pythonstyle}
+
+% ============================================
+% CUSTOM COMMANDS
+% ============================================
+
+% Tô đậm
+\newcommand{\tbf}[1]{\textbf{#1}}
+
+% Checkmark
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+% ============================================
+% HEADER & FOOTER
+% ============================================
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% ============================================
+% DOCUMENT INFORMATION
+% ============================================
+
+\title{
+    \textbf{BÁO CÁO ĐỒ ÁN CUỐI KÌ} \\
+    \textbf{MÔN XỬ LÝ NGÔN NGỮ TỰ NHIÊN} \\
+    \vspace{1cm}
+    \large{ĐỀ TÀI: DỊCH MÁY ANH-PHÁP SỬ DỤNG \\ LSTM ENCODER-DECODER}
+}
+
+\author{
+    \textbf{Sinh viên thực hiện:} \\
+    [Họ và tên sinh viên 1] - MSSV: [MSSV 1] \\
+    [Họ và tên sinh viên 2] - MSSV: [MSSV 2] \\
+    \vspace{0.5cm}
+    \textbf{Giảng viên hướng dẫn:} \\
+    [Tên giảng viên]
+}
+
+\date{TP. Hồ Chí Minh, tháng 12/2025}
+
+% ============================================
+% BEGIN DOCUMENT
+% ============================================
+
+\begin{document}
+
+% ============================================
+% TRANG BÌA
+% ============================================
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{0.5cm}
+        
+        % Logo và tên trường
+        \textbf{\Large ĐẠI HỌC QUỐC GIA TP. HỒ CHÍ MINH} \\
+        \textbf{\Large TRƯỜNG ĐẠI HỌC SÀI GÒN} \\
+        \vspace{0.3cm}
+        
+        % Có thể chèn logo
+        % \includegraphics[width=0.2\textwidth]{figures/sgu_logo.png}
+        
+        \vspace{1cm}
+        \rule{\linewidth}{0.5pt} \\
+        \vspace{0.5cm}
+        
+        % Tiêu đề
+        {\LARGE \textbf{BÁO CÁO ĐỒ ÁN CUỐI KÌ}} \\
+        \vspace{0.3cm}
+        {\Large \textbf{MÔN XỬ LÝ NGÔN NGỮ TỰ NHIÊN}} \\
+        \vspace{0.5cm}
+        \rule{\linewidth}{0.5pt}
+        
+        \vspace{1.5cm}
+        
+        % Đề tài
+        {\Large \textbf{ĐỀ TÀI:}} \\
+        \vspace{0.5cm}
+        {\LARGE \textbf{DỊCH MÁY ANH-PHÁP SỬ DỤNG}} \\
+        {\LARGE \textbf{LSTM ENCODER-DECODER}} \\
+        
+        \vfill
+        
+        % Thông tin sinh viên
+        \begin{flushleft}
+        \hspace{2cm}
+        \begin{tabular}{ll}
+            \textbf{Giảng viên hướng dẫn:} & [Tên giảng viên] \\
+            & \\
+            \textbf{Sinh viên thực hiện:} & [Họ và tên sinh viên 1] \\
+            \textbf{MSSV:} & [MSSV 1] \\
+            & \\
+            & [Họ và tên sinh viên 2] (nếu có) \\
+            \textbf{MSSV:} & [MSSV 2] \\
+            & \\
+            \textbf{Lớp:} & [Mã lớp] \\
+        \end{tabular}
+        \end{flushleft}
+        
+        \vspace{1cm}
+        
+        % Ngày tháng
+        {\large TP. Hồ Chí Minh, tháng 12/2025}
+        
+    \end{center}
+\end{titlepage}
+
+% ============================================
+% MỤC LỤC
+% ============================================
+
+\tableofcontents
+\newpage
+
+% Danh sách hình
+\listoffigures
+\newpage
+
+% Danh sách bảng
+\listoftables
+\newpage
+
+% ============================================
+% NỘI DUNG CHÍNH
+% ============================================
+
+% Include các chapter từ file riêng
+\input{chapters/1_introduction}
+\input{chapters/2_related_work}
+\input{chapters/3_methodology}
+\input{chapters/4_experiments}
+\input{chapters/5_conclusion}
+
+% ============================================
+% TÀI LIỆU THAM KHẢO
+% ============================================
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+% ============================================
+% PHỤ LỤC
+% ============================================
+
+\appendix
+\input{appendices/appendix_a}
+\input{appendices/appendix_b}
+\input{appendices/appendix_c}
+
+\end{document}

@@ -1,0 +1,106 @@
+% ============================================
+% CHAPTER 1: GIỚI THIỆU
+% ============================================
+
+\chapter{Giới thiệu}
+\label{chap:introduction}
+
+\section{Bối cảnh và động lực}
+\label{sec:background}
+
+Trong bối cảnh toàn cầu hóa ngày càng gia tăng, nhu cầu dịch thuật tự động giữa các ngôn ngữ trở thành một vấn đề cấp thiết. Dịch máy (Machine Translation - MT) là một trong những bài toán quan trọng và thách thức nhất trong lĩnh vực Xử lý Ngôn ngữ Tự nhiên (Natural Language Processing - NLP).
+
+Truyền thống, các hệ thống dịch máy thống kê (Statistical Machine Translation - SMT) dựa trên các mô hình xác suất và song ngữ liệu song song đã đạt được những kết quả nhất định \cite{koehn2010statistical}. Tuy nhiên, phương pháp này gặp nhiều hạn chế trong việc nắm bắt ngữ cảnh và cấu trúc ngữ pháp phức tạp.
+
+Sự bùng nổ của Deep Learning trong những năm gần đây đã mở ra một hướng tiếp cận mới: \textbf{Dịch máy neural} (Neural Machine Translation - NMT). Khác với SMT, NMT sử dụng mạng neural để học trực tiếp ánh xạ từ câu nguồn sang câu đích, cho phép mô hình nắm bắt được các đặc trưng ngữ nghĩa ở mức độ sâu hơn.
+
+Đặc biệt, kiến trúc \textbf{Encoder-Decoder} với LSTM (Long Short-Term Memory) được giới thiệu bởi Sutskever et al. \cite{sutskever2014sequence} đã chứng minh hiệu quả vượt trội trong việc xử lý chuỗi dài và giải quyết vấn đề vanishing gradient của RNN truyền thống.
+
+\section{Mục tiêu đồ án}
+\label{sec:objectives}
+
+Đồ án này tập trung vào việc xây dựng một hệ thống dịch máy Anh-Pháp sử dụng kiến trúc LSTM Encoder-Decoder. Cụ thể, các mục tiêu bao gồm:
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Cài đặt mô hình Encoder-Decoder}: Xây dựng kiến trúc LSTM 2 lớp với embedding dimension 256 và hidden dimension 512.
+    
+    \item \textbf{Xử lý dữ liệu}: Xây dựng pipeline tiền xử lý dữ liệu bao gồm tokenization, vocabulary building, padding và packing.
+    
+    \item \textbf{Huấn luyện mô hình}: Implement training loop với early stopping, gradient clipping và teacher forcing.
+    
+    \item \textbf{Đánh giá hiệu năng}: Đạt BLEU score $\geq 20\%$ trên tập test Multi30K.
+    
+    \item \textbf{Phân tích lỗi}: Phân loại và phân tích các lỗi dịch phổ biến, đề xuất hướng cải thiện.
+    
+    \item \textbf{So sánh với baseline}: So sánh kết quả với các phương pháp cơ bản và state-of-the-art.
+\end{enumerate}
+
+\section{Phạm vi và giới hạn}
+\label{sec:scope}
+
+\subsection{Phạm vi}
+
+\begin{itemize}
+    \item \textbf{Dataset}: Multi30K English-French parallel corpus \cite{elliott2016multi30k}
+    \begin{itemize}
+        \item Training set: 29,000 câu
+        \item Validation set: 1,014 câu
+        \item Test set: 1,000 câu
+    \end{itemize}
+    
+    \item \textbf{Cặp ngôn ngữ}: Anh $\rightarrow$ Pháp (đơn hướng)
+    
+    \item \textbf{Kiến trúc}: LSTM Encoder-Decoder \textit{không có} Attention mechanism (theo yêu cầu đề bài)
+    
+    \item \textbf{Môi trường}: Google Colab với GPU Tesla T4
+    
+    \item \textbf{Framework}: PyTorch 2.0+
+\end{itemize}
+
+\subsection{Giới hạn}
+
+\begin{itemize}
+    \item Không sử dụng Attention mechanism (mặc dù Attention đã được chứng minh hiệu quả hơn)
+    
+    \item Vocabulary giới hạn ở 10,000 từ phổ biến nhất cho mỗi ngôn ngữ
+    
+    \item Độ dài câu tối đa: 50 tokens
+    
+    \item Không sử dụng pretrained embeddings (word2vec, GloVe, FastText)
+    
+    \item Chỉ xử lý văn bản thuần, không xử lý context hình ảnh (mặc dù Multi30K có ảnh kèm theo)
+\end{itemize}
+
+\section{Đóng góp của đồ án}
+\label{sec:contributions}
+
+Đồ án này mang lại các đóng góp sau:
+
+\begin{enumerate}
+    \item \textbf{Implementation đầy đủ}: Cài đặt hoàn chỉnh hệ thống NMT từ đầu (from scratch), bao gồm data processing, model architecture, training loop, và inference.
+    
+    \item \textbf{Phân tích chi tiết}: Phân tích 4 loại lỗi phổ biến (câu dài, OOV, ngữ pháp, thứ tự từ) với ví dụ cụ thể và đề xuất giải pháp.
+    
+    \item \textbf{Reproducibility}: Code được tổ chức rõ ràng, có comment đầy đủ, và checkpoint model được lưu trữ để tái hiện kết quả.
+    
+    \item \textbf{Baseline mạnh}: Đạt BLEU 23.4\% (cao hơn yêu cầu 20\%), là baseline tốt cho các cải tiến sau này.
+    
+    \item \textbf{Hướng phát triển}: Đề xuất 5 hướng cải tiến cụ thể với ước tính BLEU improvement.
+\end{enumerate}
+
+\section{Cấu trúc báo cáo}
+\label{sec:structure}
+
+Báo cáo được tổ chức thành 5 chương chính:
+
+\begin{itemize}
+    \item \textbf{Chương 1 - Giới thiệu}: Bối cảnh, mục tiêu, phạm vi và đóng góp của đồ án.
+    
+    \item \textbf{Chương 2 - Các công trình liên quan}: Tổng quan về lịch sử dịch máy và các công trình nghiên cứu liên quan đến Encoder-Decoder.
+    
+    \item \textbf{Chương 3 - Phương pháp tiếp cận}: Mô tả chi tiết kiến trúc mô hình, xử lý dữ liệu, và cấu hình huấn luyện.
+    
+    \item \textbf{Chương 4 - Thực nghiệm và kết quả}: Thiết lập thực nghiệm, kết quả training, BLEU score, 5 ví dụ dịch, và phân tích lỗi.
+    
+    \item \textbf{Chương 5 - Kết luận}: Tổng kết, hạn chế, và hướng phát triển tương lai.
+\end{itemize}

@@ -1,0 +1,122 @@
+% ============================================
+% PHỤ LỤC A: CẤU HÌNH VÀ SIÊU THAM SỐ
+% ============================================
+
+\chapter{Cấu hình và siêu tham số}
+\label{app:configuration}
+
+\section{Cấu hình đầy đủ}
+
+\begin{lstlisting}[language=Python, caption={Configuration file - config.py}]
+# ============================================
+# CONFIGURATION - NLP FINAL PROJECT
+# English-French Machine Translation
+# ============================================
+
+CONFIG = {
+    # ===== DATA CONFIGURATION =====
+    'max_vocab_size': 10000,      # Top 10K most frequent words
+    'max_seq_len': 50,            # Maximum sequence length
+    'min_freq': 2,                # Minimum word frequency
+    
+    # ===== MODEL ARCHITECTURE =====
+    'emb_dim': 256,               # Embedding dimension
+    'hid_dim': 512,               # LSTM hidden dimension
+    'n_layers': 2,                # Number of LSTM layers
+    'dropout': 0.3,               # Dropout ratio
+    
+    # ===== TRAINING CONFIGURATION =====
+    'batch_size': 64,             # Batch size
+    'num_epochs': 15,             # Number of epochs
+    'learning_rate': 0.001,       # Learning rate for Adam
+    'clip': 1.0,                  # Gradient clipping max_norm
+    'teacher_forcing_ratio': 0.5, # Teacher forcing probability
+    'early_stopping_patience': 3, # Stop after 3 non-improving epochs
+    
+    # ===== SPECIAL TOKENS =====
+    'pad_token': '<pad>',         # Padding token (idx=0)
+    'unk_token': '<unk>',         # Unknown token (idx=1)
+    'sos_token': '<sos>',         # Start of sequence (idx=2)
+    'eos_token': '<eos>',         # End of sequence (idx=3)
+    
+    # ===== DEVICE =====
+    'device': 'cuda' if torch.cuda.is_available() else 'cpu'
+}
+
+# Data paths
+DATA_PATHS = {
+    'train_en': 'data/train.en',
+    'train_fr': 'data/train.fr',
+    'val_en': 'data/val.en',
+    'val_fr': 'data/val.fr',
+    'test_en': 'data/test.en',
+    'test_fr': 'data/test.fr',
+}
+
+# Checkpoint paths
+CHECKPOINT_PATHS = {
+    'best_model': 'check_point/best_model.pth',
+    'src_vocab': 'check_point/src_vocab.pth',
+    'tgt_vocab': 'check_point/tgt_vocab.pth',
+}
+\end{lstlisting}
+
+\section{Thông số mô hình chi tiết}
+
+\begin{table}[H]
+\centering
+\caption{Thông số chi tiết của các thành phần}
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{Component} & \textbf{Parameter} & \textbf{Value} \\ 
+\midrule
+\multirow{4}{*}{Vocabulary} 
+    & Source vocab size & 10,000 \\
+    & Target vocab size & 10,000 \\
+    & Special tokens & 4 (\texttt{<pad>}, \texttt{<unk>}, \texttt{<sos>}, \texttt{<eos>}) \\
+    & Min frequency & 2 \\
+\midrule
+\multirow{5}{*}{Encoder} 
+    & Embedding dim & 256 \\
+    & Hidden dim & 512 \\
+    & Num layers & 2 \\
+    & Dropout & 0.3 \\
+    & Total parameters & ~7.5M \\
+\midrule
+\multirow{5}{*}{Decoder} 
+    & Embedding dim & 256 \\
+    & Hidden dim & 512 \\
+    & Num layers & 2 \\
+    & Dropout & 0.3 \\
+    & Total parameters & ~12.5M \\
+\midrule
+\textbf{Total Model} & & \textbf{~20M parameters} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Môi trường thực thi}
+
+\begin{lstlisting}[language=bash, caption={Requirements.txt}]
+torch==2.0.1
+torchtext==0.15.2
+numpy==1.24.3
+matplotlib==3.7.1
+nltk==3.8.1
+spacy==3.5.3
+tqdm==4.65.0
+pandas==2.0.2
+\end{lstlisting}
+
+\begin{lstlisting}[language=bash, caption={Cài đặt môi trường}]
+# Tạo virtual environment
+python -m venv nlp_env
+source nlp_env/bin/activate  # Linux/Mac
+# nlp_env\Scripts\activate  # Windows
+
+# Cài đặt dependencies
+pip install -r requirements.txt
+
+# Download nltk data
+python -c "import nltk; nltk.download('punkt')"
+\end{lstlisting}

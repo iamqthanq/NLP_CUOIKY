@@ -1,0 +1,200 @@
+% ============================================
+% CHAPTER 2: CÁC CÔNG TRÌNH LIÊN QUAN
+% ============================================
+
+\chapter{Các công trình liên quan}
+\label{chap:related_work}
+
+\section{Tổng quan về dịch máy}
+\label{sec:mt_overview}
+
+\subsection{Dịch máy dựa trên luật (Rule-based MT)}
+
+Dịch máy dựa trên luật (Rule-Based Machine Translation - RBMT) là phương pháp đầu tiên được phát triển từ những năm 1950s. Phương pháp này sử dụng từ điển song ngữ và các luật ngữ pháp được định nghĩa thủ công để chuyển đổi từ ngôn ngữ nguồn sang ngôn ngữ đích.
+
+\textbf{Ưu điểm:}
+\begin{itemize}
+    \item Kiểm soát được chất lượng dịch trong các domain cụ thể
+    \item Phù hợp với các cặp ngôn ngữ có cấu trúc tương đồng
+\end{itemize}
+
+\textbf{Nhược điểm:}
+\begin{itemize}
+    \item Tốn kém thời gian và chi phí để xây dựng luật
+    \item Khó mở rộng sang ngôn ngữ mới
+    \item Không xử lý được các trường hợp ngoại lệ
+\end{itemize}
+
+\subsection{Dịch máy thống kê (Statistical MT)}
+
+Dịch máy thống kê (Statistical Machine Translation - SMT) được phát triển mạnh mẽ từ những năm 1990s, đặc biệt là các nghiên cứu tại IBM \cite{brown1990statistical}. SMT học các mô hình xác suất từ corpus song song lớn.
+
+Công thức cơ bản của SMT:
+\begin{equation}
+\hat{t} = \argmax_{t} P(t|s) = \argmax_{t} P(s|t) \cdot P(t)
+\end{equation}
+
+Trong đó:
+\begin{itemize}
+    \item $P(s|t)$: Translation model (mô hình dịch)
+    \item $P(t)$: Language model (mô hình ngôn ngữ)
+\end{itemize}
+
+Phương pháp SMT phổ biến nhất là \textbf{Phrase-based SMT} \cite{koehn2003statistical}, sử dụng cụm từ thay vì từ đơn lẻ.
+
+\textbf{Hạn chế của SMT:}
+\begin{itemize}
+    \item Khó nắm bắt phụ thuộc xa (long-range dependencies)
+    \item Các thành phần độc lập → khó tối ưu end-to-end
+    \item Cần feature engineering thủ công
+\end{itemize}
+
+\subsection{Dịch máy neural (Neural MT)}
+
+Dịch máy neural (Neural Machine Translation - NMT) ra đời vào năm 2014, đánh dấu bước ngoặt lớn trong lĩnh vực dịch máy. NMT sử dụng mạng neural sâu để học trực tiếp ánh xạ từ câu nguồn sang câu đích.
+
+\textbf{Ưu điểm của NMT:}
+\begin{itemize}
+    \item End-to-end training (tối ưu toàn bộ hệ thống)
+    \item Không cần feature engineering
+    \item Nắm bắt được ngữ cảnh và ngữ nghĩa tốt hơn
+    \item Dịch tự nhiên hơn (fluency cao hơn)
+\end{itemize}
+
+\section{Kiến trúc Encoder-Decoder}
+\label{sec:encoder_decoder}
+
+\subsection{Sequence to Sequence Learning (Sutskever et al., 2014)}
+
+Sutskever et al. \cite{sutskever2014sequence} là những người đầu tiên đề xuất kiến trúc Encoder-Decoder cho dịch máy. Kiến trúc này sử dụng 2 LSTM:
+
+\begin{itemize}
+    \item \textbf{Encoder LSTM}: Đọc câu nguồn và mã hóa thành context vector cố định
+    \item \textbf{Decoder LSTM}: Sinh ra câu đích từ context vector
+\end{itemize}
+
+Mô hình đạt BLEU 34.8 trên WMT'14 English-to-French, vượt trội so với SMT (33.3).
+
+\textbf{Insight quan trọng:}
+\begin{enumerate}
+    \item Đảo ngược câu nguồn (reverse input sequence) giúp cải thiện BLEU +1-2\%
+    \item LSTM xử lý tốt chuỗi dài hơn RNN vanilla nhờ cell state
+    \item Deep LSTM (4 layers) tốt hơn shallow LSTM (2 layers)
+\end{enumerate}
+
+\subsection{RNN Encoder-Decoder (Cho et al., 2014)}
+
+Cho et al. \cite{cho2014learning} đề xuất kiến trúc tương tự nhưng sử dụng GRU (Gated Recurrent Unit) thay vì LSTM. GRU đơn giản hơn LSTM nhưng vẫn đạt hiệu quả tương đương.
+
+\textbf{Công thức Encoder:}
+\begin{align}
+h_t &= \text{GRU}(x_t, h_{t-1}) \\
+c &= h_T \quad \text{(context vector)}
+\end{align}
+
+\textbf{Công thức Decoder:}
+\begin{align}
+s_t &= \text{GRU}(y_{t-1}, s_{t-1}) \\
+P(y_t | y_{<t}, x) &= \text{softmax}(W_s s_t + b)
+\end{align}
+
+\subsection{Attention Mechanism (Bahdanau et al., 2015)}
+
+Bahdanau et al. \cite{bahdanau2015neural} giải quyết vấn đề bottleneck của context vector cố định bằng cách đề xuất \textbf{Attention mechanism}.
+
+\textbf{Ý tưởng chính:}
+\begin{itemize}
+    \item Thay vì dùng 1 context vector cố định, decoder có thể "attend" đến các vị trí khác nhau của câu nguồn tại mỗi bước dịch.
+\end{itemize}
+
+\textbf{Công thức Attention:}
+\begin{align}
+e_{ij} &= \text{score}(s_{i-1}, h_j) = v^T \tanh(W_1 s_{i-1} + W_2 h_j) \\
+\alpha_{ij} &= \frac{\exp(e_{ij})}{\sum_{k=1}^{T_x} \exp(e_{ik})} \\
+c_i &= \sum_{j=1}^{T_x} \alpha_{ij} h_j
+\end{align}
+
+Trong đó:
+\begin{itemize}
+    \item $e_{ij}$: attention score giữa decoder state $s_{i-1}$ và encoder state $h_j$
+    \item $\alpha_{ij}$: attention weights (tổng = 1)
+    \item $c_i$: context vector động cho time step $i$
+\end{itemize}
+
+\textbf{Kết quả:} Attention giúp cải thiện BLEU từ 26.75 → 28.53 trên WMT'14 EN-FR.
+
+\subsection{Luong Attention (Luong et al., 2015)}
+
+Luong et al. \cite{luong2015effective} đề xuất 2 loại attention đơn giản hơn:
+
+\textbf{Global Attention:}
+\begin{equation}
+\text{score}(h_t, \bar{h}_s) = 
+\begin{cases}
+h_t^T \bar{h}_s & \text{(dot)} \\
+h_t^T W \bar{h}_s & \text{(general)} \\
+v^T \tanh(W[h_t; \bar{h}_s]) & \text{(concat)}
+\end{cases}
+\end{equation}
+
+\textbf{Local Attention:} Chỉ attend vào 1 cửa sổ nhỏ thay vì toàn bộ câu nguồn.
+
+\section{Các cải tiến khác}
+\label{sec:other_improvements}
+
+\subsection{Subword Tokenization}
+
+Sennrich et al. \cite{sennrich2016neural} đề xuất sử dụng Byte Pair Encoding (BPE) để giải quyết vấn đề từ hiếm (rare words) và OOV (out-of-vocabulary).
+
+\textbf{Ý tưởng:} Tách từ thành subword units:
+\begin{verbatim}
+"motorcyclist" → ["motor", "cycl", "ist"]
+"photographie" → ["photo", "graph", "ie"]
+\end{verbatim}
+
+\textbf{Lợi ích:}
+\begin{itemize}
+    \item Giảm vocab size từ 100K → 30K
+    \item Giảm tỉ lệ OOV từ 20\% → 2\%
+    \item Cải thiện BLEU +2-3\%
+\end{itemize}
+
+\subsection{Transformer Architecture}
+
+Vaswani et al. \cite{vaswani2017attention} đề xuất Transformer, thay thế hoàn toàn LSTM/GRU bằng Self-Attention.
+
+\textbf{Ưu điểm của Transformer:}
+\begin{itemize}
+    \item Parallel computation (nhanh hơn LSTM)
+    \item Nắm bắt long-range dependencies tốt hơn
+    \item BLEU cao hơn: 41.8 trên WMT'14 EN-DE (vs 28.4 của LSTM)
+\end{itemize}
+
+\textbf{Tuy nhiên:} Đồ án này sử dụng LSTM theo yêu cầu, để hiểu rõ kiến trúc cơ bản trước khi chuyển sang Transformer.
+
+\section{So sánh các phương pháp}
+\label{sec:comparison}
+
+\begin{table}[H]
+\centering
+\caption{So sánh các phương pháp dịch máy}
+\label{tab:mt_comparison}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Phương pháp} & \textbf{Năm} & \textbf{BLEU} & \textbf{Ưu điểm} & \textbf{Nhược điểm} \\ 
+\midrule
+RBMT & 1950s & - & Kiểm soát tốt & Tốn kém \\
+SMT (Phrase-based) & 1990s & 33.3 & Mature & Feature engineering \\
+LSTM Seq2Seq & 2014 & 34.8 & End-to-end & Bottleneck \\
+LSTM + Attention & 2015 & 28.5 & Dynamic context & Chậm \\
+Transformer & 2017 & 41.8 & Song song hóa & Cần GPU mạnh \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Nhận xét:}
+\begin{itemize}
+    \item Mỗi thế hệ đều cải thiện BLEU +3-5\%
+    \item Hiện tại: Transformer là SOTA, nhưng LSTM vẫn quan trọng để hiểu nền tảng
+    \item Đồ án này: LSTM Encoder-Decoder (baseline), mục tiêu BLEU ≥ 20\%
+\end{itemize}
