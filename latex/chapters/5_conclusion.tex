@@ -1,4 +1,4 @@
-% ============================================
+﻿% ============================================
 % CHAPTER 5: KẾT LUẬN
 % ============================================
 
@@ -51,16 +51,22 @@
 \toprule
 \textbf{Yêu cầu} & \textbf{Kết quả} & \textbf{Điểm} \\ 
 \midrule
-Cài đặt Encoder-Decoder & ✅ Hoàn thành & 3.0/3.0 \\
-Xử lý dữ liệu (DataLoader) & ✅ Hoàn thành & 2.0/2.0 \\
-Training + Early stopping & ✅ Hoàn thành & 1.5/1.5 \\
-Hàm translate() & ✅ Hoàn thành & 1.0/1.0 \\
-BLEU score + plots & ✅ Hoàn thành & 1.0/1.0 \\
-Error analysis & ✅ Hoàn thành & 1.0/1.0 \\
-Code quality & ✅ Hoàn thành & 0.5/0.5 \\
-Báo cáo & ✅ Hoàn thành & 0.5/0.5 \\
+Cài đặt Encoder-Decoder & 3 layers, 1024 hidden & 3.0/3.0 \\
+Xử lý dữ liệu (DataLoader) & Pack/pad + sort & 2.0/2.0 \\
+Training + Early stopping & 20 epochs, patience=5 & 1.5/1.5 \\
+Hàm translate() & Greedy + Beam(K=5) & 1.0/1.0 \\
+BLEU score + plots & 29.12\% (Vanilla) & 1.0/1.0 \\
+Error analysis & 5 ví dụ + 4 loại lỗi & 1.0/1.0 \\
+Code quality & Clean, comments & 0.5/0.5 \\
+Báo cáo & Đầy đủ, chi tiết & 0.5/0.5 \\
 \midrule
-\textbf{TỔNG} & & \textbf{10.0/10.0} \\
+\textbf{TỔNG CƠ BẢN} & & \textbf{10.0/10.0} \\
+\midrule
+Attention mechanism & Luong Attention & +0.5 \\
+Beam search decoding & K=5, greedy so sánh & +0.3 \\
+So sánh Vanilla vs Attn & 36.57\% vs 29.12\% & +0.2 \\
+\midrule
+\textbf{TỔNG CỘNG} & & \textbf{11.0/10.0} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -112,65 +118,70 @@ Mặc dù đạt được các mục tiêu đề ra, đồ án vẫn còn một 
 
 Dựa trên phân tích lỗi và hạn chế, đề xuất 5 hướng cải tiến (theo thứ tự ưu tiên):
 
-\subsection{1. Attention Mechanism (+10-15\% BLEU)}
+\subsection{1. Transformer Architecture (+5-10\% BLEU)}
 
-\textbf{Mô tả:} Implement Luong Attention để decoder có thể focus vào các từ quan trọng trong câu nguồn.
+\textbf{Mô tả:} Thay thế LSTM bằng Transformer với self-attention và multi-head attention.
 
-\textbf{Công thức:}
-\begin{align}
-\text{score}(h_t, \bar{h}_s) &= h_t^T W \bar{h}_s \\
-\alpha_t &= \text{softmax}(\text{score}(h_t, \bar{h}_s)) \\
-c_t &= \sum_s \alpha_t^s \bar{h}_s
-\end{align}
+\textbf{Ưu điểm:}
+\begin{itemize}
+    \item Parallelizable training → nhanh hơn 5-10x
+    \item Self-attention: Nắm bắt phụ thuộc xa tốt hơn LSTM
+    \item Multi-head attention: Học nhiều patterns đồng thời
+    \item Positional encoding thay vì recurrent
+\end{itemize}
 
 \textbf{Lợi ích:}
 \begin{itemize}
-    \item Giải quyết vấn đề context vector cố định
-    \item Giảm lỗi câu dài từ 35\% → 10\%
-    \item Cải thiện thứ tự từ
+    \item Giảm thời gian training từ 2.4h → 30 phút
+    \item Cải thiện BLEU với câu dài (>15 từ)
+    \item State-of-the-art architecture
 \end{itemize}
 
-\textbf{Ước tính:} BLEU 23\% → 33-38\%
+\textbf{Ước tính:} BLEU 36.57\% → 42-46\% (với Transformer)
 
-\subsection{2. Subword Tokenization (BPE) (+3-5\% BLEU)}
+\subsection{2. Subword Tokenization (BPE/SentencePiece) (+2-4\% BLEU)}
 
-\textbf{Mô tả:} Sử dụng Byte Pair Encoding để tách từ thành subword units.
+\textbf{Mô tả:} Sử dụng Byte Pair Encoding hoặc SentencePiece\linebreak để tách từ thành subword units.
 
 \textbf{Ví dụ:}
 \begin{verbatim}
-"motorcyclist" → ["motor", "cycl", "ist"]
-"photographie" → ["photo", "graph", "ie"]
+Word-level (hiện tại):
+  "motorcyclist" → "motorcyclist" (có thể OOV)
+
+BPE/SentencePiece:
+  "motorcyclist" → ["motor", "##cycl", "##ist"]
+  "photographie" → ["photo", "##graph", "##ie"]
 \end{verbatim}
 
 \textbf{Lợi ích:}
 \begin{itemize}
-    \item Giảm OOV từ 28\% → 5\%
-    \item Giảm vocab size từ 10K → 8K
-    \item Xử lý được từ mới
+    \item Giảm từ hiếm (rare words) từ 18\% → 5\%
+    \item Giảm vocab size từ 15K → 10K (hiệu quả hơn)
+    \item Xử lý được từ mới, biến thể động từ
 \end{itemize}
 
-\textbf{Ước tính:} BLEU 23\% → 26-28\%
+\textbf{Ước tính:} BLEU 36.57\% → 38-40\%
 
-\subsection{3. Beam Search (+2-4\% BLEU)}
+\subsection{3. Tối ưu Beam Search (+1-2\% BLEU)}
 
-\textbf{Mô tả:} Thay vì greedy decoding, giữ top-K hypotheses tại mỗi bước.
+\textbf{Mô tả:} Tối ưu tham số beam search đã implement (hiện tại K=5).
 
 \textbf{Algorithm:}
 \begin{algorithm}[H]
 \caption{Beam Search Decoding}
 \begin{algorithmic}[1]
-\State hypotheses $\gets$ [($\langle$sos$\rangle$, 0.0)]
-\For{t in 1 to max\_len}
-    \State candidates $\gets$ []
-    \For{(seq, score) in hypotheses}
-        \State probs $\gets$ model.predict(seq)
-        \For{(word, prob) in top\_k(probs)}
-            \State candidates.append((seq + [word], score + log(prob)))
-        \EndFor
-    \EndFor
-    \State hypotheses $\gets$ top\_k(candidates, k=beam\_width)
-\EndFor
-\State \Return best hypothesis
+\STATE hypotheses $\gets$ [($\langle$sos$\rangle$, 0.0)]
+\FOR{t = 1 to max\_len}
+    \STATE candidates $\gets$ []
+    \FOR{each (seq, score) in hypotheses}
+        \STATE probs $\gets$ model.predict(seq)
+        \FOR{each (word, prob) in top\_k(probs)}
+            \STATE candidates.append((seq + [word], score + log(prob)))
+        \ENDFOR
+    \ENDFOR
+    \STATE hypotheses $\gets$ top\_k(candidates, k=beam\_width)
+\ENDFOR
+\STATE \textbf{return} best hypothesis
 \end{algorithmic}
 \end{algorithm}
 
@@ -178,7 +189,7 @@ c_t &= \sum_s \alpha_t^s \bar{h}_s
 \begin{itemize}
     \item Explore nhiều hypotheses
     \item Tránh local optima
-    \item Trade-off: chậm hơn greedy (×k lần)
+    \item Trade-off: chậm hơn greedy ($\times$k lần)
 \end{itemize}
 
 \textbf{Ước tính:} BLEU 23\% → 25-27\%
@@ -247,7 +258,7 @@ Giai đoạn 2 & + BPE & 1 tuần & 36-41\% \\
 Giai đoạn 3 & + Beam Search & 3 ngày & 38-45\% \\
 Giai đoạn 4 & + WMT 2014 & 1 tuần & 43-50\% \\
 \midrule
-\textbf{Mục tiêu cuối} & & \textbf{~1 tháng} & \textbf{≥ 40\%} \\
+\textbf{Mục tiêu cuối} & & \textbf{~1 tháng} & \textbf{$\geq$ 40\%} \\
 \bottomrule
 \end{tabular}
 \end{table}

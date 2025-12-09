@@ -6,14 +6,13 @@
 % Compiler: XeLaTeX (hoặc pdfLaTeX với vietnamesepackage)
 % ============================================
 
-\documentclass[13pt,a4paper]{report}
+\documentclass[12pt,a4paper]{report}
 
 % ============================================
 % PACKAGES
 % ============================================
 
 % Tiếng Việt
-\usepackage[utf8]{inputenc}
 \usepackage[vietnamese]{babel}
 
 % Layout và lề
@@ -25,12 +24,17 @@
 ]{geometry}
 
 % Font và text
-\usepackage{times}              % Times New Roman
+\usepackage{fontspec}           % For XeLaTeX font management
+\setmainfont{Latin Modern Roman}  % Default serif font (always available)
+\setsansfont{Latin Modern Sans}   % Sans serif
+\setmonofont{Latin Modern Mono}   % Monospace for code
 \usepackage{setspace}           % Dãn dòng
 \onehalfspacing                 % 1.5 line spacing
 
 % Toán học
 \usepackage{amsmath}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
 \usepackage{amssymb}
 \usepackage{amsthm}
 
@@ -77,6 +81,8 @@
 
 % Header và footer
 \usepackage{fancyhdr}
+\setlength{\headheight}{17pt}  % Fix fancyhdr warning
+\addtolength{\topmargin}{-5pt}  % Adjust top margin
 
 % Danh sách
 \usepackage{enumitem}

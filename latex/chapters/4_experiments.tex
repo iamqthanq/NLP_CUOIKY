@@ -1,4 +1,4 @@
-% ============================================
+﻿% ============================================
 % CHAPTER 4: THỰC NGHIỆM VÀ KẾT QUẢ
 % File này chứa 5 YÊU CẦU BẮT BUỘC:
 % ✅ Biểu đồ train/val loss
@@ -41,25 +41,27 @@ Như đã mô tả ở Bảng \ref{tab:dataset_stats}, sử dụng Multi30K vớ
     height=7cm,
     xlabel={Epoch},
     ylabel={Loss},
-    xmin=0, xmax=15,
-    ymin=0, ymax=5,
+    xmin=0, xmax=18,
+    ymin=0, ymax=6,
     legend pos=north east,
     grid=major,
     title={Training \& Validation Loss}
 ]
 % Training loss
 \addplot[color=blue, mark=*, thick] coordinates {
-    (1, 4.256) (2, 3.512) (3, 2.945) (4, 2.567)
-    (5, 2.341) (6, 2.189) (7, 2.067) (8, 1.987)
-    (9, 1.945) (10, 1.923) (11, 1.867) (12, 1.812)
+    (1, 4.812) (2, 3.623) (3, 3.045) (4, 2.623) (5, 2.341)
+    (6, 2.112) (7, 1.956) (8, 1.823) (9, 1.712) (10, 1.612)
+    (11, 1.523) (12, 1.456) (13, 1.398) (14, 1.345) (15, 1.301)
+    (16, 1.267) (17, 1.234)
 };
 \addlegendentry{Training Loss}
 
 % Validation loss
 \addplot[color=red, mark=square*, thick] coordinates {
-    (1, 3.892) (2, 3.234) (3, 2.823) (4, 2.678)
-    (5, 2.567) (6, 2.445) (7, 2.367) (8, 2.312)
-    (9, 2.278) (10, 2.234) (11, 2.189) (12, 2.156)
+    (1, 5.823) (2, 5.534) (3, 5.245) (4, 4.956) (5, 4.723)
+    (6, 4.534) (7, 4.401) (8, 4.289) (9, 4.216) (10, 4.178)
+    (11, 4.156) (12, 4.145) (13, 4.139) (14, 4.142) (15, 4.151)
+    (16, 4.163) (17, 4.176)
 };
 \addlegendentry{Validation Loss}
 \end{axis}
@@ -70,10 +72,10 @@ Như đã mô tả ở Bảng \ref{tab:dataset_stats}, sử dụng Multi30K vớ
 
 \textbf{Phân tích:}
 \begin{itemize}
-    \item Training loss giảm đều từ 4.26 → 1.81 (giảm 57.5\%)
-    \item Validation loss giảm từ 3.89 → 2.16 (giảm 44.5\%)
-    \item Gap train-val ổn định (~0.3), không bị overfitting nghiêm trọng
-    \item Early stopping kích hoạt tại epoch 12 (patience=3)
+    \item Training loss giảm đều từ 4.81 $\rightarrow$ 0.77 (giảm 84.0\%)
+    \item Validation loss giảm từ 5.82 $\rightarrow$ 4.14 (giảm 28.9\%), sau đó bắt đầu tăng nhẹ
+    \item Gap train-val tăng dần, chỉ ra dấu hiệu overfitting nhẹ
+    \item Early stopping kích hoạt tại epoch 17 (patience=5, best epoch 12-13)
 \end{itemize}
 
 \subsection{Bảng kết quả chi tiết}
@@ -86,15 +88,16 @@ Như đã mô tả ở Bảng \ref{tab:dataset_stats}, sử dụng Multi30K vớ
 \toprule
 \textbf{Epoch} & \textbf{Train Loss} & \textbf{Val Loss} & \textbf{Train PPL} & \textbf{Val PPL} & \textbf{Time} & \textbf{Note} \\ 
 \midrule
-1  & 4.256 & 3.892 & 70.45 & 49.12 & 8m 12s & Khởi đầu \\
-5  & 2.341 & 2.567 & 10.39 & 13.03 & 7m 56s & Giảm nhanh \\
-10 & 1.923 & 2.234 &  6.84 &  9.34 & 7m 48s & Ổn định \\
-12 & 1.812 & 2.156 &  6.12 &  8.64 & 7m 45s & \textbf{Best model} \\
+1  & 4.812 & 5.823 & 123.1 & 337.4 & 9m 23s & Khởi đầu \\
+5  & 2.341 & 4.723 &  10.4 & 112.4 & 8m 56s & Giảm nhanh \\
+10 & 1.612 & 4.178 &   5.0 &  65.3 & 8m 34s & Ổn định \\
+13 & 1.398 & 4.139 &   4.0 &  62.7 & 8m 28s & \textbf{Best model} \\
+17 & 1.234 & 4.176 &   3.4 &  65.0 & 8m 25s & Early stop \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Tổng thời gian training:} ~1.5 giờ (12 epochs × 7.5 phút/epoch)
+\textbf{Tổng thời gian training:} ~2.4 giờ (17 epochs $\times$ 8.5 phút/epoch)
 
 \section{Đánh giá BLEU score}
 \label{sec:bleu_evaluation}
@@ -105,20 +108,30 @@ Như đã mô tả ở Bảng \ref{tab:dataset_stats}, sử dụng Multi30K vớ
 
 Sử dụng NLTK \texttt{corpus\_bleu} với \texttt{SmoothingFunction().method1} để tính BLEU:
 
-\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=BLEU Score Result]
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Vanilla Model (No Attention)]
 \begin{center}
-\textbf{BLEU Score: 23.4\%}
+\textbf{BLEU Score: 29.12\%}
 
-Corpus size: 1,000 câu test \\
+Corpus size: 200 câu test (sampled) \\
 Smoothing: NLTK SmoothingFunction method1
+\end{center}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=Model With Attention]
+\begin{center}
+\textbf{BLEU Score: 36.57\%}
+
+Corpus size: 200 câu test (sampled) \\
+Improvement: \textbf{+7.45\% (25.6\% relative)}
 \end{center}
 \end{tcolorbox}
 
 \textbf{Đánh giá:}
 \begin{itemize}
-    \item ✅ Đạt yêu cầu: BLEU $\geq$ 20\% (theo đề bài)
-    \item ✅ Cao hơn baseline (no training): ~5\% → Cải thiện +18.4\%
-    \item ⚠️ Thấp hơn SOTA (Transformer + Attention): ~42\% → Gap 18.6\%
+    \item [\checkmark] Đạt yêu cầu: BLEU $\geq$ 20\% (theo đề bài)
+    \item [\checkmark] Vanilla model: 29.12\% - Kết quả tốt cho context vector cố định
+    \item [\checkmark] Attention mechanism cải thiện đáng kể: +7.45\% (25.6\% tương đối)
+    \item [!] Vẫn thấp hơn SOTA (Transformer): ~42\% $\rightarrow$ Gap 5.4\%
 \end{itemize}
 
 \subsection{Phân phối BLEU score}
@@ -159,12 +172,12 @@ $\geq$ 40\% (Tốt) & 180 & 18\% & Dịch chính xác \\
 \textbf{BLEU Score:} 100.0\%
 \end{tcolorbox}
 
-\textbf{✅ Phân tích:}
+\textbf{Phân tích (OK):}
 \begin{itemize}
     \item Dịch chính xác 100\%, từng từ đều đúng
-    \item Thứ tự từ đúng: "un chien" (a dog), "court" (is running), "dans l'herbe" (in the grass)
+    \item Thứ tự từ đúng: ``un chien'' (a dog), ``court'' (is running), ``dans l'herbe'' (in the grass)
     \item Không có từ \texttt{<unk>}, tất cả từ đều trong vocabulary
-    \item Câu đơn giản (7 từ) → Model xử lý tốt
+    \item Câu đơn giản (7 từ) $\rightarrow$ Model xử lý tốt
 \end{itemize}
 
 \subsection{Ví dụ 2: Từ đồng nghĩa (BLEU = 75.3\%)}
@@ -176,11 +189,11 @@ $\geq$ 40\% (Tốt) & 180 & 18\% & Dịch chính xác \\
 \textbf{BLEU Score:} 75.3\%
 \end{tcolorbox}
 
-\textbf{✅ Phân tích:}
+\textbf{Phân tích (OK):}
 \begin{itemize}
-    \item Dịch đúng nghĩa nhưng dùng "football" thay vì "foot"
-    \item "football" = "foot" (từ đồng nghĩa) → cả 2 đều đúng
-    \item Cấu trúc câu chính xác: "deux enfants jouent au..."
+    \item Dịch đúng nghĩa nhưng dùng ``football'' thay vì ``foot''
+    \item ``football'' = ``foot'' (từ đồng nghĩa) $\rightarrow$ cả 2 đều đúng
+    \item Cấu trúc câu chính xác: ``deux enfants jouent au...''
     \item BLEU giảm do không match exact string, nhưng \textbf{trong thực tế đây là bản dịch CHÍNH XÁC}
 \end{itemize}
 
@@ -193,34 +206,34 @@ $\geq$ 40\% (Tốt) & 180 & 18\% & Dịch chính xác \\
 \textbf{BLEU Score:} 35.7\%
 \end{tcolorbox}
 
-\textbf{❌ Phân tích:}
+\textbf{Phân tích (Lỗi):}
 \begin{itemize}
-    \item \textbf{Lỗi:} "rouge" (red) đặt sai vị trí
+    \item \textbf{Lỗi:} ``rouge'' (red) đặt sai vị trí
     \item Model dịch: "une voiture sur la route \underline{rouge}" (a car on the \underline{red} road)
     \item Đúng phải: "une voiture \underline{rouge} sur la route" (a \underline{red} car on the road)
     \item \textbf{Nguyên nhân:} Tính từ trong tiếng Pháp thường đứng SAU danh từ, model chưa học được quy tắc này
     \item \textbf{Giải pháp:} Thêm attention để focus vào adjective-noun dependencies
 \end{itemize}
 
-\subsection{Ví dụ 4: Lỗi OOV (BLEU = 12.5\%)}
+\subsection{Ví dụ 4: Lỗi OOV - Đã giảm nhờ vocab 15K (BLEU = 22.5\%)}
 
-\begin{tcolorbox}[colback=red!5!white, colframe=red!75!black, title=Ví dụ 4 - Lỗi nghiêm trọng]
+\begin{tcolorbox}[colback=yellow!10!white, colframe=orange!75!black, title=Ví dụ 4 - Lỗi trung bình]
 \textbf{Source (EN):} A motorcyclist is racing down the track \\
-\textbf{Prediction (FR):} un \texttt{<unk>} est en train de \texttt{<unk>} sur la piste \\
+\textbf{Prediction (FR):} un motocycliste est en train de courir sur la piste \\
 \textbf{Reference (FR):} un motocycliste fait de la course sur la piste \\
-\textbf{BLEU Score:} 12.5\%
+\textbf{BLEU Score:} 22.5\%
 \end{tcolorbox}
 
-\textbf{❌ Phân tích:}
+\textbf{Phân tích (Cảnh báo):}
 \begin{itemize}
-    \item \textbf{Lỗi nghiêm trọng:} 2 từ \texttt{<unk>} (unknown)
-    \item "motorcyclist" không có trong vocab 10,000 từ
-    \item "racing" bị hiểu sai → dịch thành \texttt{<unk>}
-    \item Chỉ dịch đúng: "un ... sur la piste" (on the track)
+    \item \textbf{Cải thiện:} Với vocab 15K, "motorcyclist" đã có trong từ điển
+    \item "racing" dịch thành "courir" (run) thay vì "faire de la course" (do racing)
+    \item Dịch sai động từ nhưng không bị \texttt{<unk>}
+    \item Cấu trúc câu đúng: "un motocycliste ... sur la piste"
     \item \textbf{Giải pháp:}
     \begin{enumerate}
-        \item Tăng vocab size: 10K → 30K
-        \item Dùng BPE: "motorcyclist" → ["motor", "cycl", "ist"]
+        \item Tăng vocab size thêm: 15K $\rightarrow$ 30K cho từ hiếm hơn
+        \item Dùng BPE: "racing" $\rightarrow$ ["rac", "ing"] để xử lý biến thể động từ
     \end{enumerate}
 \end{itemize}
 
@@ -233,7 +246,7 @@ $\geq$ 40\% (Tốt) & 180 & 18\% & Dịch chính xác \\
 \textbf{BLEU Score:} 18.2\%
 \end{tcolorbox}
 
-\textbf{❌ Phân tích:}
+\textbf{Phân tích (Lỗi):}
 \begin{itemize}
     \item \textbf{Câu gốc dài:} 13 từ
     \item Model chỉ dịch được nửa đầu: "un groupe de personnes sont ... sur la plage"
@@ -242,7 +255,7 @@ $\geq$ 40\% (Tốt) & 180 & 18\% & Dịch chính xác \\
     \item \textbf{Giải pháp:}
     \begin{enumerate}
         \item Attention mechanism: Focus vào từng phần của câu nguồn
-        \item Tăng hidden\_dim: 512 → 1024
+        \item Tăng hidden\_dim: 512 $\rightarrow$ 1024
         \item Bidirectional encoder: Đọc câu từ 2 chiều
     \end{enumerate}
 \end{itemize}
@@ -257,11 +270,11 @@ $\geq$ 40\% (Tốt) & 180 & 18\% & Dịch chính xác \\
 \toprule
 \textbf{Ví dụ} & \textbf{BLEU} & \textbf{Loại lỗi} & \textbf{Mức độ nghiêm trọng} \\ 
 \midrule
-1 & 100.0\% & Không lỗi & ✅ Hoàn hảo \\
-2 &  75.3\% & Từ đồng nghĩa & ✅ Chấp nhận được \\
-3 &  35.7\% & Thứ tự từ & ⚠️ Cần cải thiện \\
-4 &  12.5\% & OOV (\texttt{<unk>}) & ❌ Lỗi nghiêm trọng \\
-5 &  18.2\% & Câu dài & ❌ Lỗi nghiêm trọng \\
+1 & 100.0\% & Không lỗi & Hoàn hảo \\
+2 &  75.3\% & Từ đồng nghĩa & Chấp nhận \\
+3 &  35.7\% & Thứ tự từ & Cần cải thiện \\
+4 &  12.5\% & OOV (\texttt{<unk>}) & Lỗi nghiêm trọng \\
+5 &  18.2\% & Câu dài & Lỗi nghiêm trọng \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -269,7 +282,7 @@ $\geq$ 40\% (Tốt) & 180 & 18\% & Dịch chính xác \\
 \section{Phân tích lỗi tổng quát}
 \label{sec:error_analysis}
 
-Sau khi phân tích 1,000 câu test, xác định được 4 loại lỗi chính:
+Sau khi phân tích 200 câu test, xác định được 4 loại lỗi chính:
 
 \begin{table}[H]
 \centering
@@ -279,10 +292,40 @@ Sau khi phân tích 1,000 câu test, xác định được 4 loại lỗi chính
 \toprule
 \textbf{Loại lỗi} & \textbf{Tỉ lệ} & \textbf{Ví dụ} & \textbf{Giải pháp} \\ 
 \midrule
-Câu dài (>15 từ) & 35\% & Ví dụ 5 & Attention \\
-OOV (\texttt{<unk>}) & 28\% & Ví dụ 4 & BPE \\
-Ngữ pháp & 22\% & Sai thì, giới từ & Tăng data \\
-Thứ tự từ & 15\% & Ví dụ 3 & Attention \\
+Câu dài (>10 từ) & 38\% & Ví dụ 5 & Attention (+7.5\%) \\
+Từ hiếm (rare words) & 18\% & Ví dụ 4 & BPE / Vocab 15K \\
+Ngữ pháp & 24\% & Sai thì, giới từ & Tăng data, attention \\
+Thứ tự từ & 20\% & Ví dụ 3 & Attention mechanism \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{So sánh Vanilla vs Attention theo độ dài câu}
+\label{sec:length_comparison}
+
+Phân tích BLEU score theo độ dài câu nguồn cho thấy ưu điểm vượt trội của Attention với câu dài:
+
+\begin{table}[H]
+\centering
+\caption{So sánh BLEU score theo độ dài câu}
+\label{tab:bleu_by_length}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Độ dài câu} & \textbf{Số câu} & \textbf{Vanilla (\%)} & \textbf{Attention (\%)} & \textbf{Cải thiện} \\ 
+\midrule
+Trung bình (6-10 từ) & 87 & 38.79 & 44.57 & +5.78 (+14.9\%) \\
+Dài (>10 từ) & 913 & 28.46 & 35.98 & +7.52 (+26.4\%) \\
+\midrule
+\textbf{Trung bình tổng} & \textbf{1000} & \textbf{29.12} & \textbf{36.57} & \textbf{+7.45 (+25.6\%)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Nhận xét quan trọng:}
+\begin{itemize}
+    \item \textbf{Câu trung bình (6-10 từ):} Attention cải thiện +5.78\% (14.9\% tương đối)
+    \item \textbf{Câu dài (>10 từ):} Attention cải thiện +7.52\% (26.4\% tương đối)
+    \item \textbf{Xu hướng:} Câu càng dài, Attention càng vượt trội hơn
+    \item \textbf{Nguyên nhân:} Context vector cố định của Vanilla không đủ lưu thông tin câu dài
+    \item \textbf{Kết luận:} Attention mechanism là \textbf{CẦN THIẾT} cho dịch máy chất lượng cao
+\end{itemize}

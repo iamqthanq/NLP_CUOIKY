@@ -1,0 +1,112 @@
+TỔNG HỢP YÊU CẦU TỪ ĐỀ BÀI
+1. QUY ĐỊNH
+✅ Nhóm: 2 sinh viên
+✅ Deadline: 14/12/2025 (23:59)
+✅ Nộp: 1 file PDF (báo cáo + code) qua E-Learning
+❌ KHÔNG CHẤP NHẬN NỘP TRỄ
+2. GIỚI THIỆU
+Triển khai Encoder-Decoder LSTM với context vector cố định (KHÔNG dùng Attention):
+
+Xử lý dữ liệu chuỗi song song
+Huấn luyện mô hình PyTorch
+Thực hiện đánh giá BLEU
+Phân tích lỗi và đề xuất cải tiến
+3. MỤC TIÊU
+Hiểu và triển khai Encoder-Decoder LSTM với context vector cố định
+Xử lý dữ liệu chuỗi, huấn luyện, đánh giá bằng BLEU score
+Phân tích lỗi dịch thuật và đề xuất cải tiến
+4. YÊU CẦU CHUNG
+Triển khai: Xây dựng từ đầu, KHÔNG dùng seq2seq có sẵn
+Công cụ: Python, PyTorch (≥1.13)
+Sản phẩm nộp:
+Mã nguồn (Jupyter Notebook hoặc .py, có chú thích rõ ràng)
+Báo cáo PDF
+Checkpoint mô hình (.pth tốt nhất)
+5. DATASET: Multi30K (en-fr)
+Train: 29,000 cặp
+Validation: 1,000 cặp
+Test: 1,000 cặp
+Đặc điểm: Câu ngắn (10-15 từ), phù hợp CPU/GPU cơ bản
+Files: train.en, train.fr, val.en, val.fr, test.en, test.fr
+6. HƯỚNG DẪN TRIỂN KHAI
+6.1. Chuẩn bị dữ liệu
+6.2. Xây dựng mô hình
+Encoder:
+
+Input: Token tiếng Anh → embedding (256-512)
+Output: Hidden states (h_n, h_n) và Context vector = (h_n, c_n)
+Decoder:
+
+Input: <sos> + context vector từ Encoder
+Output: Xác suất từ tiếp theo trong tiếng Pháp
+Tham số khuyến nghị:
+
+Tham số	Giá trị
+Hidden size	512
+Embedding dim	256-512
+Số layer LSTM	2
+Dropout	0.3-0.5
+Teacher forcing ratio	0.5
+6.3. Huấn luyện
+Loss: nn.CrossEntropyLoss(ignore_index=pad_idx)
+Optimizer: Adam(lr=0.001)
+Epochs: 10-20
+Early stopping: Dừng nếu val_loss không giảm sau 3 epochs
+Scheduler: ReduceLROnPlateau (tùy chọn)
+Theo dõi: Train/val loss, lưu best model
+Teacher Forcing:
+
+6.4. Dự đoán (Inference)
+Greedy decoding: Chọn token có xác suất cao nhất
+Dừng tại <eos> hoặc độ dài tối đa 50
+Yêu cầu bắt buộc: Viết hàm translate(sentence: str) -> str
+6.5. Đánh giá
+BLEU score: nltk.translate.bleu_score.sentence_bleu (trên tập test)
+Perplexity: Tùy chọn
+Báo cáo: BLEU trung bình + 5 ví dụ dịch (đúng/sai) + phân tích lỗi
+7. PHẦN MỞ RỘNG (TÙY CHỌN, +ĐIỂM CỘNG)
+Dùng dataset WMT 2014
+Tăng số layer LSTM hoặc hidden size
+Thay greedy decoding bằng beam search (beam size = 3-5)
+Thêm attention mechanism (Luong/Bahdanau)
+So sánh hiệu suất với mô hình có attention
+8. XỬ LÝ CÁC PHẦN KHÓ
+Vấn đề	Giải pháp
+Độ dài chuỗi khác nhau	pack_padded_sequence + sort batch theo độ dài
+Teacher forcing & exposure bias	Dùng tỷ lệ 0.5 hoặc scheduled sampling
+Overfitting	Dropout, giới hạn độ dài câu (≤50), early stopping
+Loss không giảm	Kiểm tra: learning rate, chuẩn hóa dữ liệu, shape tensor
+9. PHÂN TÍCH LỖI (BẮT BUỘC TRONG BÁO CÁO)
+Lỗi phổ biến:
+
+Từ hiểm (OOV) → <unk>
+Câu dài → mất thông tin (do context vector cố định)
+Dịch sai ngữ pháp, thiếu từ
+Đề xuất cải tiến:
+
+Thêm attention
+Dùng subword (BPE)
+Beam search
+10. THANG ĐIỂM ĐÁNH GIÁ (10 ĐIỂM)
+Tiêu chí	Điểm
+1. Triển khai mô hình đúng (Encoder-Decoder LSTM)	3.0
+2. Xử lý dữ liệu, DataLoader, padding/packing	2.0
+3. Huấn luyện ổn định, có early stopping, lưu checkpoint	1.5
+4. Hàm translate() hoạt động với câu mới	1.0
+5. Đánh giá BLEU score + biểu đồ loss	1.0
+6. Phân tích 5 ví dụ lỗi + đề xuất cải tiến	1.0
+7. Chất lượng mã nguồn (sạch, có comment, cấu trúc rõ)	0.5
+8. Báo cáo (đầy đủ, rõ ràng, có biểu đồ, trích dẫn)	0.5
+Điểm cộng (mở rộng)	1.0
+Tổng: 10 điểm
+
+11. LƯU Ý QUAN TRỌNG
+Mã nguồn phải chạy được từ đầu đến cuối trên Google Colab hoặc máy local
+Báo cáo PDF phải bao gồm:
+Sơ đồ kiến trúc
+Biểu đồ train/val loss
+BLEU score
+5 ví dụ dịch + phân tích
+Chương trình nguồn (trong Phụ lục)
+Checkpoint mô hình (best_model.pth) BẮT BUỘC nộp
+Không sao chép mã → sẽ bị 0 điểm
