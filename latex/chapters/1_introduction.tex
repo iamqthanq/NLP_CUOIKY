@@ -19,20 +19,34 @@ Sự bùng nổ của Deep Learning trong những năm gần đây đã mở ra 
 \section{Mục tiêu đồ án}
 \label{sec:objectives}
 
-Đồ án này tập trung vào việc xây dựng một hệ thống dịch máy Anh-Pháp sử dụng kiến trúc LSTM Encoder-Decoder. Cụ thể, các mục tiêu bao gồm:
+Đồ án này tập trung vào việc xây dựng một hệ thống dịch máy Anh-Pháp sử dụng kiến trúc LSTM Encoder-Decoder, bao gồm cả phần cơ bản (baseline) và phần mở rộng (extensions). Cụ thể, các mục tiêu bao gồm:
+
+\subsection{Phần bắt buộc (Baseline Model)}
 
 \begin{enumerate}[label=\arabic*.]
-    \item \textbf{Cài đặt mô hình Encoder-Decoder}: Xây dựng kiến trúc LSTM 2 lớp với embedding dimension 256 và hidden dimension 512.
+    \item \textbf{Cài đặt mô hình Encoder-Decoder}: Xây dựng kiến trúc LSTM 2 lớp với embedding dimension 256 và hidden dimension 512, context vector cố định.
     
-    \item \textbf{Xử lý dữ liệu}: Xây dựng pipeline tiền xử lý dữ liệu bao gồm tokenization, vocabulary building, padding\linebreak và packing.
+    \item \textbf{Xử lý dữ liệu}: Xây dựng pipeline tiền xử lý dữ liệu bao gồm tokenization, vocabulary building (10K từ), padding và packing.
     
-    \item \textbf{Huấn luyện mô hình}: Implement training loop với early stopping, gradient clipping và teacher forcing.
+    \item \textbf{Huấn luyện mô hình}: Implement training loop với early stopping (patience=3), gradient clipping và teacher forcing (ratio=0.5 cố định).
     
     \item \textbf{Đánh giá hiệu năng}: Đạt BLEU score $\geq 20\%$ trên tập test Multi30K.
     
-    \item \textbf{Phân tích lỗi}: Phân loại và phân tích các lỗi dịch phổ biến, đề xuất hướng cải thiện.
+    \item \textbf{Phân tích lỗi}: Phân loại và phân tích các lỗi dịch phổ biến (câu dài, OOV, ngữ pháp, thứ tự từ) với ví dụ cụ thể.
+\end{enumerate}
+
+\subsection{Phần mở rộng (để đạt điểm cao hơn)}
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Attention Mechanism}: Implement Luong Attention để khắc phục hạn chế của context vector cố định, cho phép decoder "chú ý" đến các vị trí khác nhau của câu nguồn.
     
-    \item \textbf{So sánh với baseline}: So sánh kết quả với các phương pháp cơ bản và state-of-the-art.
+    \item \textbf{Tăng model capacity}: Nâng cấp từ 2 layers → 3 layers, hidden 512 → 1024, embedding 256 → 512, vocab 10K → 15K.
+    
+    \item \textbf{Scheduled Sampling}: Thay teacher forcing cố định (0.5) bằng scheduled sampling (0.7 → 0.5) để giảm exposure bias.
+    
+    \item \textbf{Beam Search Decoding}: Thay greedy decoding bằng beam search (K=5) để khám phá nhiều hypotheses.
+    
+    \item \textbf{So sánh hiệu năng}: Đánh giá chi tiết sự cải thiện của Attention so với Vanilla, đặc biệt với câu dài.
 \end{enumerate}
 
 \section{Phạm vi và giới hạn}
@@ -50,7 +64,11 @@ Sự bùng nổ của Deep Learning trong những năm gần đây đã mở ra 
     
     \item \textbf{Cặp ngôn ngữ}: Anh $\rightarrow$ Pháp (đơn hướng)
     
-    \item \textbf{Kiến trúc}: LSTM Encoder-Decoder \textit{không có} Attention mechanism (theo yêu cầu đề bài)
+    \item \textbf{Kiến trúc}: 
+    \begin{itemize}
+        \item \textit{Baseline}: LSTM Encoder-Decoder với context vector cố định (không có Attention)
+        \item \textit{Extension}: LSTM Encoder-Decoder với Luong Attention mechanism
+    \end{itemize}
     
     \item \textbf{Môi trường}: Google Colab với GPU Tesla T4
     
@@ -59,16 +77,21 @@ Sự bùng nổ của Deep Learning trong những năm gần đây đã mở ra 
 
 \subsection{Giới hạn}
 
+\textbf{Baseline Model:}
 \begin{itemize}
-    \item Không sử dụng Attention mechanism (mặc dù Attention đã được chứng minh hiệu quả hơn)
+    \item Context vector cố định (theo yêu cầu đề bài baseline)
     
     \item Vocabulary giới hạn ở 10,000 từ phổ biến nhất cho mỗi ngôn ngữ
+    \item Chỉ xử lý văn bản thuần, không xử lý context hình ảnh (mặc dù Multi30K có ảnh kèm theo)
+\end{itemize}
+
+\textbf{Cả hai models (Baseline \& Extension):}
+\begin{itemize}
+    \item Không sử dụng pretrained embeddings (word2vec, GloVe, FastText)
     
     \item Độ dài câu tối đa: 50 tokens
     
-    \item Không sử dụng pretrained embeddings (word2vec, GloVe, FastText)
-    
-    \item Chỉ xử lý văn bản thuần, không xử lý context hình ảnh (mặc dù Multi30K có ảnh kèm theo)
+    \item Chỉ dịch một chiều (Anh → Pháp), không dịch ngược lại
 \end{itemize}
 
 \section{Đóng góp của đồ án}
@@ -77,30 +100,38 @@ Sự bùng nổ của Deep Learning trong những năm gần đây đã mở ra 
 Đồ án này mang lại các đóng góp sau:
 
 \begin{enumerate}
-    \item \textbf{Implementation đầy đủ}: Cài đặt hoàn chỉnh hệ thống NMT từ đầu (from scratch), bao gồm data processing, model architecture, training loop, và inference.
+    \item \textbf{Implementation đầy đủ cả 2 models}: 
+    \begin{itemize}
+        \item Cài đặt hoàn chỉnh Baseline model (theo yêu cầu bắt buộc)
+        \item Cài đặt Extension model với Attention \& Beam Search (phần mở rộng)
+        \item Code từ đầu (from scratch), bao gồm data processing, model architecture, training loop, và inference
+    \end{itemize}
     
-    \item \textbf{Phân tích chi tiết}: Phân tích 4 loại lỗi phổ biến (câu dài, OOV, ngữ pháp, thứ tự từ) với ví dụ cụ thể và đề xuất giải pháp.
+    \item \textbf{Kết quả vượt yêu cầu}: 
+    \begin{itemize}
+        \item Baseline: BLEU 29.12\% (vượt yêu cầu 20\%)
+        \item Extension: BLEU 36.57\% (vượt xa yêu cầu, đạt mức tốt)
+        \item Đủ điều kiện đạt 11/10 điểm (10 cơ bản + 1 mở rộng)
+    \end{itemize}
     
     \item \textbf{Reproducibility}: Code được tổ chức rõ ràng, có comment đầy đủ, và checkpoint model được lưu trữ để tái hiện kết quả.
-    
-    \item \textbf{Baseline mạnh}: Đạt BLEU 23.4\% (cao hơn yêu cầu 20\%), là baseline tốt cho các cải tiến sau này.
-    
-    \item \textbf{Hướng phát triển}: Đề xuất 5 hướng cải tiến cụ thể với\linebreak ước tính BLEU improvement.
 \end{enumerate}
 
 \section{Cấu trúc báo cáo}
 \label{sec:structure}
 
-Báo cáo được tổ chức thành 5 chương chính:
+Báo cáo được tổ chức thành 6 chương chính (khớp với mô tả ở trên):
 
 \begin{itemize}
     \item \textbf{Chương 1 - Giới thiệu}: Bối cảnh, mục tiêu, phạm vi và đóng góp của đồ án.
     
     \item \textbf{Chương 2 - Các công trình liên quan}: Tổng quan về lịch sử dịch máy và các công trình nghiên cứu liên quan đến Encoder-Decoder.
     
-    \item \textbf{Chương 3 - Phương pháp tiếp cận}: Mô tả chi tiết kiến trúc mô hình, xử lý dữ liệu, và cấu hình huấn luyện.
+    \item \textbf{Chương 3 - Baseline Model}: Mô tả chi tiết kiến trúc Vanilla model, xử lý dữ liệu, và cấu hình huấn luyện.
     
-    \item \textbf{Chương 4 - Thực nghiệm và kết quả}: Thiết lập thực nghiệm, kết quả training, BLEU score, 5 ví dụ dịch, và phân tích lỗi.
+    \item \textbf{Chương 4 - Kết quả Baseline}: Thiết lập thực nghiệm, kết quả training, BLEU 29.12\%, 5 ví dụ dịch, và phân tích lỗi.
     
-    \item \textbf{Chương 5 - Kết luận}: Tổng kết, hạn chế, và hướng phát triển tương lai.
+    \item \textbf{Chương 5 - Extension: Attention \& Beam Search}: Kiến trúc Attention model, kết quả BLEU 36.57\%, so sánh với Baseline.
+    
+    \item \textbf{Chương 6 - Kết luận}: Tổng kết cả 2 models, hạn chế, và hướng phát triển tương lai.
 \end{itemize}

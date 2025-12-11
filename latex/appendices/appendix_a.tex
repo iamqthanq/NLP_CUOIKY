@@ -15,23 +15,23 @@
 
 CONFIG = {
     # ===== DATA CONFIGURATION =====
-    'max_vocab_size': 15000,      # Top 15K most frequent words
+    'max_vocab_size': 10000,      # Top 10K most frequent words (Baseline)
     'max_seq_len': 50,            # Maximum sequence length
     'min_freq': 1,                # Minimum word frequency
     
-    # ===== MODEL ARCHITECTURE =====
-    'emb_dim': 512,               # Embedding dimension
-    'hid_dim': 1024,              # LSTM hidden dimension
-    'n_layers': 3,                # Number of LSTM layers
-    'dropout': 0.5,               # Dropout ratio
+    # ===== MODEL ARCHITECTURE (BASELINE) =====
+    'emb_dim': 256,               # Embedding dimension
+    'hid_dim': 512,               # LSTM hidden dimension
+    'n_layers': 2,                # Number of LSTM layers
+    'dropout': 0.3,               # Dropout ratio
     
     # ===== TRAINING CONFIGURATION =====
-    'batch_size': 128,            # Batch size
-    'num_epochs': 20,             # Number of epochs
+    'batch_size': 64,             # Batch size
+    'num_epochs': 15,             # Number of epochs
     'learning_rate': 0.001,       # Learning rate for Adam
     'clip': 1.0,                  # Gradient clipping max_norm
-    'teacher_forcing_ratio': 0.7, # Teacher forcing probability (initial)
-    'early_stopping_patience': 5, # Stop after 5 non-improving epochs
+    'teacher_forcing_ratio': 0.5, # Teacher forcing probability
+    'early_stopping_patience': 3, # Stop after 3 non-improving epochs
     
     # ===== SPECIAL TOKENS =====
     'pad_token': '<pad>',         # Padding token (idx=0)
@@ -71,26 +71,26 @@ CHECKPOINT_PATHS = {
 \textbf{Component} & \textbf{Parameter} & \textbf{Value} \\ 
 \midrule
 \multirow{4}{*}{Vocabulary} 
-    & Source vocab size & 15,000 \\
-    & Target vocab size & 15,000 \\
+    & Source vocab (EN) & 10,000 tokens \\
+    & Target vocab (FR) & 11,825 tokens \\
     & Special tokens & 4 (\texttt{<pad>}, \texttt{<unk>}, \texttt{<sos>}, \texttt{<eos>}) \\
     & Min frequency & 1 \\
 \midrule
 \multirow{5}{*}{Encoder} 
-    & Embedding dim & 512 \\
-    & Hidden dim & 1024 \\
-    & Num layers & 3 \\
-    & Dropout & 0.5 \\
-    & Total parameters & ~23.5M \\
+    & Embedding dim & 256 \\
+    & Hidden dim & 512 \\
+    & Num layers & 2 \\
+    & Dropout & 0.3 \\
+    & Total parameters & ~9.5M \\
 \midrule
 \multirow{5}{*}{Decoder} 
-    & Embedding dim & 512 \\
-    & Hidden dim & 1024 \\
-    & Num layers & 3 \\
-    & Dropout & 0.5 \\
-    & Total parameters & ~38.2M \\
+    & Embedding dim & 256 \\
+    & Hidden dim & 512 \\
+    & Num layers & 2 \\
+    & Dropout & 0.3 \\
+    & Total parameters & ~15.7M \\
 \midrule
-\textbf{Total Model} & & \textbf{~61.7M parameters} \\
+\textbf{Total Model} & & \textbf{~25.2M parameters} \\
 \bottomrule
 \end{tabular}
 \end{table}

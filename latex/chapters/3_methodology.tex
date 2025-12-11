@@ -1,9 +1,11 @@
 ﻿% ============================================
-% CHAPTER 3: PHƯƠNG PHÁP TIẾP CẬN
+% CHAPTER 3: BASELINE MODEL (VANILLA ENCODER-DECODER)
 % ============================================
 
-\chapter{Phương pháp tiếp cận}
-\label{chap:methodology}
+\chapter{Baseline Model: Vanilla Encoder-Decoder}
+\label{chap:baseline_methodology}
+
+\textit{Chương này mô tả chi tiết kiến trúc và cấu hình của Baseline Model (Vanilla Encoder-Decoder với context vector cố định, KHÔNG có Attention), theo đúng yêu cầu bắt buộc của đề bài.}
 
 \section{Tổng quan kiến trúc}
 \label{sec:architecture_overview}
@@ -24,13 +26,13 @@
     \node[box, below of=input] (token) {Tokenization \& Embedding};
     
     % Encoder
-    \node[box, below of=token, fill=blue!20] (encoder) {ENCODER (LSTM) \\ 2 layers, hidden=512 \\ dropout=0.3};
+    \node[box, below of=token, fill=blue!20] (encoder) {ENCODER (LSTM) \\ 2 layers, hidden=512 \\ emb=256, dropout=0.3};
     
     % Context vector
-    \node[box, below of=encoder, fill=yellow!30] (context) {Context Vector \\ $(h_n, c_n)$ \\ shape: [2, batch, 512]};
+    \node[box, below of=encoder, fill=yellow!30] (context) {Context Vector CỐ ĐỊNH \\ $(h_n, c_n)$ \\ shape: [2, batch, 512]};
     
     % Decoder
-    \node[box, below of=context, fill=green!20] (decoder) {DECODER (LSTM) \\ 2 layers, hidden=512 \\ teacher forcing=0.5};
+    \node[box, below of=context, fill=green!20] (decoder) {DECODER (LSTM) \\ 2 layers, hidden=512 \\ TF=0.5 (fixed)};
     
     % Output
     \node[box, below of=decoder] (output) {Output: Un chien court};
@@ -43,11 +45,11 @@
     \draw[arrow] (decoder) -- (output);
     
 \end{tikzpicture}
-\caption{Kiến trúc tổng thể LSTM Encoder-Decoder cho dịch máy Anh-Pháp}
-\label{fig:architecture}
+\caption{Kiến trúc Baseline Model (Vanilla Encoder-Decoder với context vector cố định)}
+\label{fig:vanilla_architecture}
 \end{figure}
 
-Hệ thống dịch máy được xây dựng dựa trên kiến trúc Encoder-Decoder \cite{sutskever2014sequence}, bao gồm 3 thành phần chính:
+Baseline model được xây dựng dựa trên kiến trúc Encoder-Decoder cổ điển của Sutskever et al. \cite{sutskever2014sequence}, với \textbf{context vector cố định} (KHÔNG có Attention mechanism theo yêu cầu đề bài). Kiến trúc bao gồm 3 thành phần chính:
 
 \begin{enumerate}
     \item \textbf{Encoder}: Mã hóa câu nguồn (tiếng Anh) thành context vector
@@ -96,7 +98,7 @@ Output: ["a", "dog", "is", "running", "!"]
 
 Xây dựng vocabulary riêng cho mỗi ngôn ngữ:
 \begin{itemize}
-    \item \textbf{Max size}: 15,000 từ phổ biến nhất
+    \item \textbf{Max size}: 10,000 từ phổ biến nhất (theo yêu cầu đề bài)
     \item \textbf{Min frequency}: Giữ tất cả từ (min\_freq=1)
     \item \textbf{Special tokens}:
     \begin{itemize}
@@ -160,11 +162,12 @@ class Encoder(nn.Module):
 
 Decoder nhận context vector từ Encoder và sinh ra câu đích từng token một.
 
-\textbf{Teacher Forcing (Scheduled Sampling):}
+\textbf{Teacher Forcing:}
 \begin{itemize}
-    \item Trong training: Bắt đầu với xác suất 70\%, giảm dần xuống 50\% (scheduled sampling)
-    \item Giúp model hội tụ nhanh hơn, nhưng có thể gây exposure bias
-    \item Scheduled sampling giúp giảm exposure bias trong quá trình training
+    \item Baseline sử dụng teacher forcing với tỷ lệ \textbf{cố định 0.5} (theo yêu cầu đề bài)
+    \item Tại mỗi bước decode, có 50\% cơ hội dùng ground-truth token, 50\% dùng predicted token
+    \item Giúp model hội tụ nhanh hơn so với không dùng teacher forcing
+    \item \textbf{Lưu ý}: Scheduled sampling (0.7 → 0.5) chỉ được dùng trong Extension Model (xem Chapter 5)
 \end{itemize}
 
 \textbf{Kiến trúc Decoder:}
@@ -265,15 +268,21 @@ Dừng training nếu validation loss không giảm sau 5 epochs:
 \toprule
 \textbf{Tham số} & \textbf{Giá trị} & \textbf{Lý do chọn} \\ 
 \midrule
-Embedding dim & 512 & Biểu diễn phong phú hơn \\
-Hidden dim & 1024 & Đủ lớn cho phụ thuộc dài và phức tạp \\
-Num layers & 3 & Deep LSTM cho biểu diễn tốt hơn \\
-Dropout & 0.5 & Regularization mạnh hơn \\
-Batch size & 128 & Tối ưu cho GPU T4, tăng throughput \\
-Learning rate & 0.001 & Giá trị chuẩn cho Adam \\
+Embedding dim & 256 & Theo đề bài: 256-512 (chọn 256) \\
+Hidden dim & 512 & Theo đề bài: 512 (khuyến nghị) \\
+Num layers & 2 & Theo đề bài: 2 layers LSTM \\
+Dropout & 0.3 & Theo đề bài: 0.3-0.5 (chọn 0.3) \\
+Batch size & 64 & Theo đề bài: 32-128 (chọn 64) \\
+Learning rate & 0.001 & Theo đề bài: Adam(lr=0.001) \\
 Gradient clip & 1.0 & Tránh exploding gradient \\
-Teacher forcing & 0.7 $\rightarrow$ 0.5 & Scheduled sampling giảm dần \\
-Max epochs & 20 & Với early stopping patience=5 \\
+Teacher forcing & 0.5 & Theo đề bài: 0.5 (fixed) \\
+Max epochs & 15 & Theo đề bài: 10-20, patience=3 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Tài liệu tham khảo bổ sung}
+
+\textbf{Chương trình nguồn đầy đủ:} Toàn bộ mã nguồn chi tiết của Baseline Model (bao gồm Vocabulary, Encoder, Decoder, Seq2Seq, Training loop, translate(), BLEU evaluation, và Data preprocessing) được trình bày đầy đủ trong \textbf{Phụ lục B} (xem \autoref{app:source_code}).
+
+\textbf{Checkpoints và Links:} Model checkpoints, vocabularies, và link lưu trữ online (Google Drive, GitHub) được liệt kê trong \textbf{Phụ lục C} (xem \autoref{app:checkpoints}).

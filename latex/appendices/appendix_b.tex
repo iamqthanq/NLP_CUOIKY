@@ -1,9 +1,11 @@
 % ============================================
-% PHỤ LỤC B: MÃ NGUỒN
+% PHỤ LỤC B: MÃ NGUỒN (RÚT GỌN)
 % ============================================
 
-\chapter{Mã nguồn đầy đủ}
+\chapter{Mã nguồn chính}
 \label{app:source_code}
+
+\textit{Lưu ý: Code dưới đây đã được rút gọn để giảm thời gian compile. Code đầy đủ có trong Jupyter notebook đính kèm.}
 
 \section{Xây dựng Vocabulary}
 
@@ -599,4 +601,250 @@ def collate_fn(batch):
         'trg': trg_padded,
         'src_len': torch.LongTensor(src_len_batch)
     }
+\end{lstlisting}
+
+\section{Attention Mechanism (Extension)}
+
+\subsection{Luong Attention}
+
+\begin{lstlisting}[language=Python, caption={Luong Attention - attention.py}]
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class LuongAttention(nn.Module):
+    """
+    Luong Attention (Multiplicative/General)
+    Score function: score(hi, st) = hi^T * Wa * st
+    """
+    def __init__(self, hidden_size):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.attn = nn.Linear(hidden_size, hidden_size, bias=False)
+    
+    def forward(self, decoder_hidden, encoder_outputs):
+        """
+        Args:
+            decoder_hidden: [batch_size, hidden_size] - st (state at step t)
+            encoder_outputs: [batch_size, src_len, hidden_size] - [h1, h2, ..., hn]
+        
+        Returns:
+            context: [batch_size, hidden_size] - ct
+            attention_weights: [batch_size, src_len] - alpha_t
+        """
+        batch_size = encoder_outputs.size(0)
+        src_len = encoder_outputs.size(1)
+        
+        # 1. Calculate attention scores
+        # Wa * st: [batch_size, hidden_size]
+        decoder_hidden_transformed = self.attn(decoder_hidden)
+        
+        # hi^T * (Wa * st) for all i
+        scores = torch.bmm(
+            encoder_outputs, 
+            decoder_hidden_transformed.unsqueeze(2)
+        )
+        # scores: [batch_size, src_len, 1]
+        scores = scores.squeeze(2)  # [batch_size, src_len]
+        
+        # 2. Softmax to get attention weights
+        attention_weights = F.softmax(scores, dim=1)  # [batch_size, src_len]
+        
+        # 3. Calculate context vector: ct = sum(alpha_ti * hi)
+        context = torch.bmm(
+            attention_weights.unsqueeze(1), 
+            encoder_outputs
+        )
+        # context: [batch_size, 1, hidden_size]
+        context = context.squeeze(1)  # [batch_size, hidden_size]
+        
+        return context, attention_weights
+\end{lstlisting}
+
+\subsection{Encoder with Attention}
+
+\begin{lstlisting}[language=Python, caption={Encoder with Attention - encoder\_attention.py}]
+class EncoderWithAttention(nn.Module):
+    """
+    Encoder returns ALL hidden states (not just the last one)
+    """
+    def __init__(self, input_dim, emb_dim, hid_dim, n_layers, dropout):
+        super().__init__()
+        
+        self.hid_dim = hid_dim
+        self.n_layers = n_layers
+        
+        self.embedding = nn.Embedding(input_dim, emb_dim)
+        self.lstm = nn.LSTM(
+            emb_dim, hid_dim, n_layers,
+            dropout=dropout, batch_first=True
+        )
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(self, src, src_len):
+        """
+        Args:
+            src: [batch_size, src_len]
+            src_len: [batch_size]
+        
+        Returns:
+            outputs: [batch_size, src_len, hidden_size] - ALL hidden states
+            hidden: [n_layers, batch_size, hidden_size]
+            cell: [n_layers, batch_size, hidden_size]
+        """
+        # Embedding
+        embedded = self.dropout(self.embedding(src))
+        # embedded: [batch_size, src_len, emb_dim]
+        
+        # Pack sequence
+        packed_embedded = nn.utils.rnn.pack_padded_sequence(
+            embedded, src_len.cpu(), batch_first=True
+        )
+        
+        # LSTM
+        packed_outputs, (hidden, cell) = self.lstm(packed_embedded)
+        
+        # Unpack to get all hidden states
+        outputs, _ = nn.utils.rnn.pad_packed_sequence(
+            packed_outputs, batch_first=True
+        )
+        # outputs: [batch_size, src_len, hidden_size]
+        
+        return outputs, hidden, cell
+\end{lstlisting}
+
+\subsection{Decoder with Attention}
+
+\begin{lstlisting}[language=Python, caption={Decoder with Attention - decoder\_attention.py}]
+class DecoderWithAttention(nn.Module):
+    """
+    Decoder with Attention mechanism
+    """
+    def __init__(self, output_dim, emb_dim, hid_dim, n_layers, dropout, attention):
+        super().__init__()
+        
+        self.output_dim = output_dim
+        self.hid_dim = hid_dim
+        self.n_layers = n_layers
+        self.attention = attention
+        
+        self.embedding = nn.Embedding(output_dim, emb_dim)
+        self.lstm = nn.LSTM(
+            emb_dim, hid_dim, n_layers,
+            dropout=dropout, batch_first=True
+        )
+        self.dropout = nn.Dropout(dropout)
+        
+        # Layer to combine context vector with hidden state
+        # Input: [context; hidden] -> Output: hidden_size
+        self.fc_out = nn.Linear(hid_dim * 2, output_dim)
+    
+    def forward(self, input, hidden, cell, encoder_outputs):
+        """
+        Args:
+            input: [batch_size] - token at step t
+            hidden: [n_layers, batch_size, hid_dim]
+            cell: [n_layers, batch_size, hid_dim]
+            encoder_outputs: [batch_size, src_len, hid_dim]
+        
+        Returns:
+            prediction: [batch_size, output_dim]
+            hidden: [n_layers, batch_size, hid_dim]
+            cell: [n_layers, batch_size, hid_dim]
+            attention_weights: [batch_size, src_len]
+        """
+        # input: [batch_size] -> [batch_size, 1]
+        input = input.unsqueeze(1)
+        
+        # Embedding
+        embedded = self.dropout(self.embedding(input))
+        # embedded: [batch_size, 1, emb_dim]
+        
+        # LSTM
+        output, (hidden, cell) = self.lstm(embedded, (hidden, cell))
+        # output: [batch_size, 1, hid_dim]
+        
+        # Get last layer hidden state
+        decoder_hidden = hidden[-1]  # [batch_size, hid_dim]
+        
+        # Calculate attention
+        context, attention_weights = self.attention(
+            decoder_hidden, encoder_outputs
+        )
+        # context: [batch_size, hid_dim]
+        # attention_weights: [batch_size, src_len]
+        
+        # Combine context and decoder hidden
+        # [context; st]
+        output = output.squeeze(1)  # [batch_size, hid_dim]
+        combined = torch.cat((context, output), dim=1)
+        # combined: [batch_size, hid_dim * 2]
+        
+        # Predict
+        prediction = self.fc_out(combined)  # [batch_size, output_dim]
+        
+        return prediction, hidden, cell, attention_weights
+\end{lstlisting}
+
+\subsection{Seq2Seq with Attention}
+
+\begin{lstlisting}[language=Python, caption={Seq2Seq with Attention - seq2seq\_attention.py}]
+class Seq2SeqWithAttention(nn.Module):
+    """Complete Seq2Seq model with Attention mechanism."""
+    
+    def __init__(self, encoder, decoder, device):
+        super().__init__()
+        
+        self.encoder = encoder
+        self.decoder = decoder
+        self.device = device
+        
+        assert encoder.hid_dim == decoder.hid_dim, \
+            "Hidden dimensions must be equal"
+        assert encoder.n_layers == decoder.n_layers, \
+            "Number of layers must be equal"
+    
+    def forward(self, src, src_len, tgt, teacher_forcing_ratio=0.5):
+        """
+        Args:
+            src: [batch_size, src_len]
+            src_len: [batch_size]
+            tgt: [batch_size, tgt_len]
+            teacher_forcing_ratio: float
+        
+        Returns:
+            outputs: [batch_size, tgt_len, output_dim]
+        """
+        batch_size = src.shape[0]
+        tgt_len = tgt.shape[1]
+        tgt_vocab_size = self.decoder.output_dim
+        
+        # Tensor to store outputs
+        outputs = torch.zeros(
+            batch_size, tgt_len, tgt_vocab_size
+        ).to(self.device)
+        
+        # Encoder: get ALL hidden states
+        encoder_outputs, hidden, cell = self.encoder(src, src_len)
+        # encoder_outputs: [batch_size, src_len, hid_dim]
+        
+        # First token is <sos>
+        input = tgt[:, 0]
+        
+        # Decode step by step
+        for t in range(1, tgt_len):
+            # Decoder with attention
+            output, hidden, cell, attention_weights = self.decoder(
+                input, hidden, cell, encoder_outputs
+            )
+            
+            # Store prediction
+            outputs[:, t] = output
+            
+            # Teacher forcing
+            teacher_force = random.random() < teacher_forcing_ratio
+            top1 = output.argmax(1)
+            input = tgt[:, t] if teacher_force else top1
+        
+        return outputs
 \end{lstlisting}

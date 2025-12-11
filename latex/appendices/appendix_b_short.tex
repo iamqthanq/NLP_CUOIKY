@@ -1,0 +1,289 @@
+% ============================================
+% PHỤ LỤC B: MÃ NGUỒN (RÚT GỌN)
+% ============================================
+
+\chapter{Mã nguồn chính}
+\label{app:source_code}
+
+\textit{Lưu ý: Code dưới đây đã được rút gọn để tiết kiệm không gian và thời gian compile. Code đầy đủ có trong Jupyter notebook đính kèm và repository GitHub.}
+
+\section{Vocabulary Class}
+
+\begin{lstlisting}[language=Python, caption={Vocabulary - Xây dựng từ điển}]
+class Vocabulary:
+    def __init__(self, max_size=10000, min_freq=2):
+        self.max_size = max_size
+        self.min_freq = min_freq
+        # Special tokens: <pad>, <unk>, <sos>, <eos>
+        
+    def build_vocab(self, sentences: List[List[str]]):
+        # Count word frequencies
+        # Keep top max_size-4 words (reserve 4 for special tokens)
+        
+    def encode(self, sentence: List[str]) -> List[int]:
+        # Convert words to indices
+        
+    def decode(self, indices: List[int]) -> List[str]:
+        # Convert indices to words
+\end{lstlisting}
+
+\section{Encoder}
+
+\begin{lstlisting}[language=Python, caption={Encoder - LSTM Encoder}]
+class Encoder(nn.Module):
+    def __init__(self, input_dim, emb_dim, hid_dim, n_layers, dropout):
+        super().__init__()
+        self.embedding = nn.Embedding(input_dim, emb_dim)
+        self.rnn = nn.LSTM(emb_dim, hid_dim, n_layers, 
+                          dropout=dropout, batch_first=True)
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(self, src, src_len):
+        embedded = self.dropout(self.embedding(src))
+        packed = pack_padded_sequence(embedded, src_len, 
+                                     batch_first=True, enforce_sorted=False)
+        packed_outputs, (hidden, cell) = self.rnn(packed)
+        outputs, _ = pad_packed_sequence(packed_outputs, batch_first=True)
+        return outputs, hidden, cell
+\end{lstlisting}
+
+\section{Decoder}
+
+\begin{lstlisting}[language=Python, caption={Decoder - LSTM Decoder with optional Attention}]
+class Decoder(nn.Module):
+    def __init__(self, output_dim, emb_dim, hid_dim, n_layers, 
+                 dropout, use_attention=False):
+        super().__init__()
+        self.output_dim = output_dim
+        self.use_attention = use_attention
+        
+        self.embedding = nn.Embedding(output_dim, emb_dim)
+        self.rnn = nn.LSTM(emb_dim, hid_dim, n_layers, 
+                          dropout=dropout, batch_first=True)
+        
+        if use_attention:
+            self.attention = LuongAttention(hid_dim)
+            self.fc_out = nn.Linear(hid_dim * 2, output_dim)
+        else:
+            self.fc_out = nn.Linear(hid_dim, output_dim)
+        
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(self, input, hidden, cell, encoder_outputs=None):
+        # input: [batch_size, 1]
+        embedded = self.dropout(self.embedding(input))
+        output, (hidden, cell) = self.rnn(embedded, (hidden, cell))
+        
+        if self.use_attention and encoder_outputs is not None:
+            # Compute attention weights and context vector
+            attn_weights = self.attention(output, encoder_outputs)
+            context = torch.bmm(attn_weights.unsqueeze(1), 
+                               encoder_outputs).squeeze(1)
+            output = torch.cat((output.squeeze(1), context), dim=1)
+        
+        prediction = self.fc_out(output)
+        return prediction, hidden, cell, attn_weights if self.use_attention else None
+\end{lstlisting}
+
+\section{Attention Mechanism}
+
+\begin{lstlisting}[language=Python, caption={Luong Attention (Dot-product)}]
+class LuongAttention(nn.Module):
+    def __init__(self, hidden_dim, method='dot'):
+        super().__init__()
+        self.method = method
+        if method == 'general':
+            self.W = nn.Linear(hidden_dim, hidden_dim, bias=False)
+    
+    def forward(self, decoder_hidden, encoder_outputs):
+        # decoder_hidden: [batch_size, 1, hidden_dim]
+        # encoder_outputs: [batch_size, src_len, hidden_dim]
+        
+        if self.method == 'dot':
+            # scores = decoder_hidden * encoder_outputs^T
+            scores = torch.bmm(decoder_hidden, encoder_outputs.transpose(1, 2))
+        elif self.method == 'general':
+            scores = torch.bmm(decoder_hidden, 
+                              self.W(encoder_outputs).transpose(1, 2))
+        
+        # Normalize with softmax
+        attn_weights = F.softmax(scores.squeeze(1), dim=1)
+        return attn_weights
+\end{lstlisting}
+
+\section{Seq2Seq Model}
+
+\begin{lstlisting}[language=Python, caption={Seq2Seq - Kết hợp Encoder và Decoder}]
+class Seq2Seq(nn.Module):
+    def __init__(self, encoder, decoder, device):
+        super().__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+        self.device = device
+    
+    def forward(self, src, src_len, trg, teacher_forcing_ratio=0.5):
+        batch_size = src.shape[0]
+        trg_len = trg.shape[1]
+        trg_vocab_size = self.decoder.output_dim
+        
+        # Store decoder outputs
+        outputs = torch.zeros(batch_size, trg_len, trg_vocab_size).to(self.device)
+        
+        # Encode source sentence
+        encoder_outputs, hidden, cell = self.encoder(src, src_len)
+        
+        # First input: <sos> token
+        input = trg[:, 0].unsqueeze(1)
+        
+        # Decode step by step
+        for t in range(1, trg_len):
+            output, hidden, cell, _ = self.decoder(input, hidden, cell, 
+                                                   encoder_outputs)
+            outputs[:, t] = output
+            
+            # Teacher forcing
+            teacher_force = random.random() < teacher_forcing_ratio
+            top1 = output.argmax(1).unsqueeze(1)
+            input = trg[:, t].unsqueeze(1) if teacher_force else top1
+        
+        return outputs
+\end{lstlisting}
+
+\section{Training Loop}
+
+\begin{lstlisting}[language=Python, caption={Training function}]
+def train_epoch(model, iterator, optimizer, criterion, clip):
+    model.train()
+    epoch_loss = 0
+    
+    for batch in iterator:
+        src, src_len = batch.src
+        trg = batch.trg
+        
+        optimizer.zero_grad()
+        
+        # Forward pass
+        output = model(src, src_len, trg)
+        
+        # Reshape for loss computation
+        output_dim = output.shape[-1]
+        output = output[:, 1:].reshape(-1, output_dim)
+        trg = trg[:, 1:].reshape(-1)
+        
+        # Compute loss
+        loss = criterion(output, trg)
+        
+        # Backward pass
+        loss.backward()
+        
+        # Gradient clipping
+        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
+        
+        optimizer.step()
+        epoch_loss += loss.item()
+    
+    return epoch_loss / len(iterator)
+\end{lstlisting}
+
+\section{Inference và BLEU Evaluation}
+
+\begin{lstlisting}[language=Python, caption={Translation và BLEU scoring}]
+def translate_sentence(sentence, src_vocab, trg_vocab, model, 
+                      device, max_len=50, use_beam_search=False, beam_width=5):
+    model.eval()
+    
+    # Tokenize and encode source sentence
+    tokens = tokenize(sentence)
+    src_indexes = [src_vocab.sos_idx] + src_vocab.encode(tokens) + [src_vocab.eos_idx]
+    src_tensor = torch.LongTensor(src_indexes).unsqueeze(0).to(device)
+    src_len = torch.LongTensor([len(src_indexes)])
+    
+    with torch.no_grad():
+        encoder_outputs, hidden, cell = model.encoder(src_tensor, src_len)
+    
+    if use_beam_search:
+        # Beam search decoding
+        trg_indexes = beam_search_decode(model.decoder, encoder_outputs, 
+                                        hidden, cell, trg_vocab, 
+                                        beam_width, max_len, device)
+    else:
+        # Greedy decoding
+        trg_indexes = [trg_vocab.sos_idx]
+        for i in range(max_len):
+            trg_tensor = torch.LongTensor([trg_indexes[-1]]).unsqueeze(0).to(device)
+            
+            with torch.no_grad():
+                output, hidden, cell, _ = model.decoder(trg_tensor, hidden, 
+                                                       cell, encoder_outputs)
+            
+            pred_token = output.argmax(1).item()
+            trg_indexes.append(pred_token)
+            
+            if pred_token == trg_vocab.eos_idx:
+                break
+    
+    # Convert to words
+    trg_tokens = trg_vocab.decode(trg_indexes)
+    return trg_tokens[1:]  # Remove <sos>
+
+def calculate_bleu(data, src_vocab, trg_vocab, model, device):
+    targets = []
+    predictions = []
+    
+    for example in data:
+        src = example.src
+        trg = example.trg
+        
+        pred_trg = translate_sentence(src, src_vocab, trg_vocab, 
+                                     model, device)
+        
+        # Remove special tokens
+        pred_trg = [token for token in pred_trg 
+                   if token not in ['<sos>', '<eos>', '<pad>']]
+        
+        targets.append([trg])
+        predictions.append(pred_trg)
+    
+    return corpus_bleu(targets, predictions) * 100
+\end{lstlisting}
+
+\section{Data Processing}
+
+\begin{lstlisting}[language=Python, caption={Multi30K dataset loading}]
+def load_multi30k_data():
+    # Load Multi30K dataset (29K train, 1K val, 1K test)
+    train_data, valid_data, test_data = Multi30K.splits(
+        exts=('.en', '.fr'),
+        fields=(SRC, TRG)
+    )
+    
+    # Build vocabularies
+    SRC.build_vocab(train_data, max_size=10000, min_freq=2)
+    TRG.build_vocab(train_data, max_size=10000, min_freq=2)
+    
+    # Create iterators
+    train_iterator, valid_iterator, test_iterator = BucketIterator.splits(
+        (train_data, valid_data, test_data),
+        batch_size=BATCH_SIZE,
+        sort_within_batch=True,
+        sort_key=lambda x: len(x.src),
+        device=device
+    )
+    
+    return train_iterator, valid_iterator, test_iterator
+\end{lstlisting}
+
+\vspace{1cm}
+\noindent\textbf{Tổng kết:} Code trên bao gồm tất cả các thành phần chính:
+\begin{itemize}
+    \item Vocabulary: Xây dựng và quản lý từ điển (EN: 10K, FR: 11.8K tokens)
+    \item Encoder: LSTM 2 layers, hidden 512, embedding 256
+    \item Decoder: LSTM với optional Attention mechanism
+    \item Attention: Luong dot-product attention
+    \item Seq2Seq: Kết hợp encoder-decoder với teacher forcing
+    \item Training: CrossEntropyLoss, Adam optimizer, gradient clipping
+    \item Inference: Greedy decoding và Beam search (K=5)
+    \item Evaluation: BLEU score calculation
+\end{itemize}
+
+\noindent Code đầy đủ có trong file \texttt{NLP\_Do\_An\_EnFr\_Translation.ipynb} (3133 dòng).
