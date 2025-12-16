@@ -25,18 +25,19 @@
     
     \item \textbf{Kết quả vượt yêu cầu}:
     \begin{itemize}
-        \item \textbf{Baseline}: BLEU 29.12\% (vượt yêu cầu 20\% đến 45\%)
-        \item \textbf{Extension}: BLEU 36.57\% (vượt xa yêu cầu, đạt mức tốt)
-        \item \textbf{Cải thiện}: +7.45\% (tuyệt đối), +25.6\% (tương đối)
+        \item \textbf{Baseline}: BLEU 32.83\% (vượt yêu cầu 20\% đến 64\%)
+        \item \textbf{Extension}: BLEU 38.04\% (vượt xa yêu cầu, đạt mức tốt)
+        \item \textbf{Cải thiện}: +5.21\% (tuyệt đối), +15.9\% (tương đối)
         \item Training time: 1.0h (Baseline) + 2.4h (Extension) = 3.4h tổng
     \end{itemize}
     
-    \item \textbf{So sánh chi tiết Vanilla vs Attention}:
+    \item \textbf{So sánh chi tiết 3 cấu hình}:
     \begin{itemize}
-        \item Phân tích BLEU theo độ dài câu: Attention vượt trội với câu dài (+7.52\%)
-        \item Phân tích theo loại lỗi: Attention giảm lỗi câu dài từ 38\% → 18\%
-        \item 2 ví dụ minh họa cụ thể cách Attention giải quyết vấn đề
+        \item Vanilla+Greedy: 32.83\% (Baseline)
+        \item Attention+Greedy: 36.57\% (thêm Attention, +3.74\%)
+        \item Attention+Beam Search: 38.04\% (thêm Beam K=5, +1.47\%)
         \item Chứng minh Attention mechanism là \textbf{CẦN THIẾT} cho dịch máy chất lượng cao
+        \item Beam Search tối ưu thêm decoding strategy (+1.47\%)
     \end{itemize}
     
     \item \textbf{Phân tích lỗi sâu}:
@@ -68,7 +69,7 @@ Cài đặt Encoder-Decoder & LSTM 2 layers, 512 hidden & 3.0/3.0 \\
 Xử lý dữ liệu (DataLoader) & Pack/pad + sort & 2.0/2.0 \\
 Training + Early stopping & 15 epochs, patience=3 & 1.5/1.5 \\
 Hàm translate() & Greedy decoding & 1.0/1.0 \\
-BLEU score + plots & 29.12\% (Vanilla) & 1.0/1.0 \\
+BLEU score + plots & 32.83\% (Vanilla) & 1.0/1.0 \\
 Error analysis & 5 ví dụ + 4 loại lỗi & 1.0/1.0 \\
 Code quality & Clean, comments & 0.5/0.5 \\
 Báo cáo & Đầy đủ, chi tiết & 0.5/0.5 \\
@@ -76,10 +77,12 @@ Báo cáo & Đầy đủ, chi tiết & 0.5/0.5 \\
 \textbf{TỔNG CƠ BẢN} & & \textbf{10.0/10.0} \\
 \midrule
 Attention mechanism & Luong Attention & +0.5 \\
-Beam search decoding & K=5, greedy so sánh & +0.3 \\
-So sánh Vanilla vs Attn & 36.57\% vs 29.12\% & +0.2 \\
+Beam search decoding & K=5, ĐÚNG Extension & +0.3 \\
+So sánh 3 cấu hình & 32.83\%/36.57\%/38.04\% & +0.2 \\
 \midrule
 \textbf{TỔNG CỘNG} & & \textbf{11.0/10.0} \\
+\midrule
+\multicolumn{3}{l}{\textit{Ghi chú: 3 cấu hình = Vanilla+Greedy / Attention+Greedy / Attention+Beam}} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -153,7 +156,7 @@ Dựa trên phân tích lỗi và hạn chế, đề xuất 5 hướng cải ti�
     \item State-of-the-art architecture (Google, Facebook đều dùng)
 \end{itemize}
 
-\textbf{Ước tính kết quả:} BLEU 36.57\% → 42-46\% (tăng +5-10\%)
+\textbf{Ước tính kết quả:} BLEU 38.04\% → 43-48\% (tăng +5-10\%)
 
 \subsection{2. Subword Tokenization (BPE/SentencePiece) (+2-4\% BLEU)}
 
@@ -176,7 +179,7 @@ BPE/SentencePiece:
     \item Xử lý được từ mới, biến thể động từ
 \end{itemize}
 
-\textbf{Ước tính:} BLEU 36.57\% → 38-40\%
+\textbf{Ước tính:} BLEU 38.04\% → 40-42\%
 
 \subsection{3. Tối ưu Beam Search (+1-2\% BLEU)}
 
@@ -208,7 +211,7 @@ BPE/SentencePiece:
     \item Trade-off: chậm hơn greedy ($\times$k lần)
 \end{itemize}
 
-\textbf{Ước tính kết quả:} BLEU 36.57\% → 37-38\% (tăng +1-2\%)
+\textbf{Ước tính kết quả:} BLEU đã đạt 38.04\% (Beam K=5 đã implement)
 
 \subsection{4. Training trên WMT 2014 (+3-5\% BLEU)}
 
@@ -236,7 +239,7 @@ Diversity & Low & High \\
     \item Generalize tốt hơn
 \end{itemize}
 
-\textbf{Ước tính kết quả:} BLEU 36.57\% → 39-41\% (tăng +3-5\%)
+\textbf{Ước tính kết quả:} BLEU 38.04\% → 41-43\% (tăng +3-5\%)
 
 \subsection{5. Pre-trained Embeddings (+2-3\% BLEU)}
 
@@ -256,7 +259,7 @@ Diversity & Low & High \\
     \item Xử lý tốt hơn từ hiếm (vì embeddings học từ corpus lớn)
 \end{itemize}
 
-\textbf{Ước tính kết quả:} BLEU 36.57\% → 38-39\% (tăng +2-3\%)
+\textbf{Ước tính kết quả:} BLEU 38.04\% → 40-41\% (tăng +2-3\%)
 
 \textbf{Lợi ích:}
 \begin{itemize}
@@ -277,11 +280,11 @@ Diversity & Low & High \\
 \toprule
 \textbf{Giai đoạn} & \textbf{Cải tiến} & \textbf{Thời gian} & \textbf{BLEU dự kiến} \\ 
 \midrule
-Baseline & Current Vanilla & - & 29.12\% \\
-Hiện tại (Done) & + Attention + Beam & - & 36.57\% \\
-Giai đoạn 1 & + Transformer & 2 tuần & 42-46\% \\
-Giai đoạn 2 & + BPE & 1 tuần & 44-50\% \\
-Giai đoạn 3 & + WMT 2014 & 1 tuần & 47-53\% \\
+Baseline & Current Vanilla & - & 32.83\% \\
+Hiện tại (Done) & + Attention + Beam & - & 38.04\% \\
+Giai đoạn 1 & + Transformer & 2 tuần & 43-48\% \\
+Giai đoạn 2 & + BPE & 1 tuần & 45-50\% \\
+Giai đoạn 3 & + WMT 2014 & 1 tuần & 48-53\% \\
 \midrule
 \textbf{Mục tiêu cuối} & & \textbf{~1 tháng} & \textbf{$\geq$ 50\%} \\
 \bottomrule
@@ -291,7 +294,7 @@ Giai đoạn 3 & + WMT 2014 & 1 tuần & 47-53\% \\
 \section{Lời kết}
 \label{sec:final_remarks}
 
-Đồ án đã thành công trong việc xây dựng một hệ thống dịch máy neural hoàn chỉnh với 2 models: Baseline (29.12\%) và Extension với Attention (36.57\%) trên Multi30K dataset. Kết quả này chứng minh hiệu quả của kiến trúc Encoder-Decoder với LSTM và sự cần thiết của Attention mechanism trong bài toán dịch máy.
+Đồ án đã thành công trong việc xây dựng một hệ thống dịch máy neural hoàn chỉnh với 2 models: Baseline (32.83\%) và Extension với Attention+Beam Search (38.04\%) trên Multi30K dataset. Kết quả này chứng minh hiệu quả của kiến trúc Encoder-Decoder với LSTM và sự cần thiết của Attention mechanism trong bài toán dịch máy.
 
 Thông qua quá trình thực hiện, nhóm đã nắm vững:
 \begin{itemize}

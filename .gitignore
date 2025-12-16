@@ -1,0 +1,27 @@
+# Model checkpoints (too large for GitHub)
+check_point/*.pth
+
+# Temporary Word files
+*.docx~
+~$*.docx
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

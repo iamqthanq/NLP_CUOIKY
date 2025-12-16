@@ -402,32 +402,155 @@ Duy trì K=5 hypotheses tốt nhất, chọn sequence có tổng log-probability
 
 \begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=\textbf{Baseline Model (Vanilla - No Attention)}]
 \begin{center}
-\textbf{BLEU Score: 29.12\%}
+\textbf{BLEU Score: 32.83\%}
 
 Corpus size: 200 câu test (sampled) \\
-Decoding: Greedy \\
+Decoding: Greedy (argmax) \\
 Vocab: 10K
 \end{center}
 \end{tcolorbox}
 
-\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=\textbf{Extension Model (With Attention + Beam Search)}]
+\begin{tcolorbox}[colback=yellow!5!white, colframe=yellow!75!black, title=\textbf{Attention + Greedy (So sánh trung gian)}]
 \begin{center}
 \textbf{BLEU Score: 36.57\%}
 
 Corpus size: 200 câu test (sampled) \\
-Decoding: Beam Search (K=5) \\
-Vocab: 15K
+Decoding: Greedy (argmax) \\
+Vocab: 15K \\
+\textit{Chỉ thêm Attention, chưa dùng Beam Search}
 \end{center}
 \end{tcolorbox}
 
-\begin{tcolorbox}[colback=yellow!10!white, colframe=orange!75!black, title=\textbf{CẢI THIỆN}]
+\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=\textbf{Extension Model (Attention + Beam Search) - ĐẦY ĐỦ}]
 \begin{center}
-\textbf{Tuyệt đối: +7.45\%} \\
-\textbf{Tương đối: +25.6\%} \\
-\vspace{0.3cm}
-\textit{Cải thiện đáng kể, chứng minh Attention mechanism CẦN THIẾT cho dịch máy chất lượng cao}
+\textbf{BLEU Score: 38.04\%}
+
+Corpus size: 200 câu test (sampled) \\
+Decoding: Beam Search (K=5) \\
+Vocab: 15K \\
+\textit{Đây là cấu hình Extension đầy đủ theo đề bài}
 \end{center}
 \end{tcolorbox}
+
+\subsection{So sánh toàn diện 3 cấu hình}
+
+\begin{table}[H]
+\centering
+\caption{So sánh chi tiết 3 cấu hình: Baseline vs Attention+Greedy vs Attention+Beam}
+\label{tab:three_configs_comparison}
+\begin{tabular}{@{}lcccp{5cm}@{}}
+\toprule
+\textbf{Cấu hình} & \textbf{Model} & \textbf{Decoding} & \textbf{BLEU} & \textbf{Ghi chú} \\ 
+\midrule
+1. Vanilla + Greedy & Encoder-Decoder & Greedy & 32.83\% & Baseline theo yêu cầu đề bài \\
+\midrule
+2. Attention + Greedy & + Attention & Greedy & 36.57\% & Chỉ thêm Attention, chưa tối ưu decoding \\
+\midrule
+3. Attention + Beam & + Attention & Beam (K=5) & 38.04\% & Extension đầy đủ theo đề bài \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Phân tích từng bước cải thiện:}
+
+\begin{enumerate}
+    \item \textbf{Bước 1: Vanilla → Attention (Greedy):}
+    \begin{itemize}
+        \item BLEU: 32.83\% → 36.57\% (+3.74\%)
+        \item Nguyên nhân: Attention mechanism giải quyết information bottleneck
+        \item Cải thiện đáng kể chỉ nhờ Attention, chứng minh Attention là CẦN THIẾT
+    \end{itemize}
+    
+    \item \textbf{Bước 2: Attention+Greedy → Attention+Beam:}
+    \begin{itemize}
+        \item BLEU: 36.57\% → 38.04\% (+1.47\%)
+        \item Nguyên nhân: Beam Search tránh local optimum, explore nhiều hypotheses
+        \item Cải thiện thêm nhờ decoding tốt hơn
+    \end{itemize}
+    
+    \item \textbf{Tổng cải thiện (Vanilla → Attention+Beam):}
+    \begin{itemize}
+        \item BLEU: 32.83\% → 38.04\% (+5.21\%)
+        \item Tương đối: +15.9\%
+        \item Trade-off: Inference chậm hơn ~5x (do Beam Search K=5)
+    \end{itemize}
+\end{enumerate}
+
+\begin{tcolorbox}[colback=yellow!10!white, colframe=orange!75!black, title=\textbf{KẾT LUẬN QUAN TRỌNG}]
+\begin{center}
+\textbf{Attention mechanism: Cải thiện +3.74\% (Bước 1)} \\
+\textbf{Beam Search: Cải thiện thêm +1.47\% (Bước 2)} \\
+\textbf{Tổng cải thiện: +5.21\% (+15.9\% tương đối)} \\
+\vspace{0.3cm}
+\textit{Extension Model (Attention + Beam Search) đạt BLEU 38.04\%,} \\
+\textit{vượt xa yêu cầu đề bài ($\geq$20\%) và cải thiện đáng kể so với Baseline}
+\end{center}
+\end{tcolorbox}
+
+\subsection{So sánh trọng tâm: Baseline vs Extension}
+
+\textit{Đây là so sánh chính theo yêu cầu đề bài: Model Baseline (bắt buộc) vs Model Extension (mở rộng).}
+
+\begin{table}[H]
+\centering
+\caption{So sánh trực tiếp Baseline và Extension (2 cấu hình chính)}
+\label{tab:baseline_vs_extension_focus}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Tiêu chí} & \textbf{Baseline} & \textbf{Extension} & \textbf{Cải thiện} & \textbf{\% tăng} \\ 
+\midrule
+\textbf{BLEU Score} & 32.83\% & 38.04\% & +5.21\% & +15.9\% \\
+\midrule
+Attention & NO & YES (Luong) & - & - \\
+Decoding & Greedy & Beam (K=5) & - & - \\
+Vocab size & 10,000 & 15,000 & +50\% & - \\
+Hidden size & 512 & 1,024 & +100\% & - \\
+Num layers & 2 & 3 & +50\% & - \\
+Dropout & 0.3 & 0.5 & +67\% & - \\
+Teacher Forcing & 0.5 (fixed) & 0.7→0.5 (scheduled) & - & - \\
+\midrule
+\textbf{Val Loss (best)} & 4.14 & 3.79 & -0.35 & -8.5\% \\
+\textbf{Val PPL (best)} & 62.7 & 44.2 & -18.5 & -29.5\% \\
+\midrule
+Training time & ~2.4h & ~2.4h & 0 & Tương đương \\
+Inference speed & Nhanh & Chậm hơn 5x & - & - \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Phân tích so sánh trực tiếp:}
+
+\begin{itemize}
+    \item \textbf{BLEU Score tăng 15.9\%}: Từ 32.83\% (Baseline) lên 38.04\% (Extension)
+    \begin{itemize}
+        \item Attention mechanism: Giải quyết bottleneck của context vector cố định
+        \item Beam Search (K=5): Tối ưu decoding, tránh local optimum
+        \item Increased capacity: Học được patterns phức tạp hơn
+    \end{itemize}
+    
+    \item \textbf{Val Loss giảm 8.5\%}: Từ 4.14 xuống 3.79
+    \begin{itemize}
+        \item Model hội tụ tốt hơn với Attention
+        \item Perplexity giảm mạnh 29.5\% (62.7 → 44.2)
+    \end{itemize}
+    
+    \item \textbf{Trade-offs quan trọng}:
+    \begin{itemize}
+        \item [\checkmark] BLEU tăng đáng kể (+5.21\%)
+        \item [\checkmark] Quality cải thiện rõ rệt (đặc biệt câu dài)
+        \item [!] Inference chậm hơn 5x (Beam Search K=5)
+        \item [!] Model phức tạp hơn 2.4x về parameters
+        \item [\checkmark] Training time tương đương (~2.4h)
+    \end{itemize}
+    
+    \item \textbf{Kết luận}: Extension đạt yêu cầu đề bài đầy đủ:
+    \begin{itemize}
+        \item Attention mechanism: Cải thiện context representation
+        \item Beam Search (K=5): Tối ưu decoding strategy
+        \item Increased capacity: Hidden 1024, Layers 3, Vocab 15K
+        \item Trade-off hợp lý giữa accuracy và inference speed
+    \end{itemize}
+\end{itemize}
 
 \subsection{So sánh theo độ dài câu}
 

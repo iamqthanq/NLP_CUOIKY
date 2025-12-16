@@ -82,20 +82,20 @@ Như đã mô tả ở Bảng \ref{tab:dataset_stats}, sử dụng Multi30K vớ
 
 \begin{table}[H]
 \centering
-\caption{Kết quả training qua các epochs}
-\label{tab:training_results}
-\begin{tabular}{@{}ccccccc@{}}
+\caption{Training log (Vanilla, chạy trên GPU) - trích các mốc chính}
+\begin{tabular}{@{}rrrrrl@{}}
 \toprule
-\textbf{Epoch} & \textbf{Train Loss} & \textbf{Val Loss} & \textbf{Train PPL} & \textbf{Val PPL} & \textbf{Time} & \textbf{Note} \\ 
+\textbf{Epoch} & \textbf{Train Loss} & \textbf{Val Loss} & \textbf{Train PPL} & \textbf{Val PPL} & \textbf{Note} \\
 \midrule
-1  & 4.812 & 5.823 & 123.1 & 337.4 & 9m 23s & Khởi đầu \\
-5  & 2.341 & 4.723 &  10.4 & 112.4 & 8m 56s & Giảm nhanh \\
-10 & 1.612 & 4.178 &   5.0 &  65.3 & 8m 34s & Ổn định \\
-13 & 1.398 & 4.139 &   4.0 &  62.7 & 8m 28s & \textbf{Best model} \\
-17 & 1.234 & 4.176 &   3.4 &  65.0 & 8m 25s & Early stop \\
+1  & 4.906 & 4.777 & 135.081 & 118.761 & Start \\
+5  & 3.052 & 3.729 & 21.150  & 41.638  & Improving \\
+10 & 2.069 & 3.268 & 7.918   & 26.252  & Stable \\
+13 & 1.701 & 3.161 & 5.481   & 23.594  & \textbf{Best val loss} \\
+15 & 1.502 & 3.260 & 4.489   & 26.058  & End (no early-stop) \\
 \bottomrule
 \end{tabular}
 \end{table}
+
 
 \textbf{Tổng thời gian training:} ~2.4 giờ (17 epochs $\times$ 8.5 phút/epoch)
 
@@ -110,28 +110,39 @@ Sử dụng NLTK \texttt{corpus\_bleu} với \texttt{SmoothingFunction().method1
 
 \begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Vanilla Model (No Attention)]
 \begin{center}
-\textbf{BLEU Score: 29.12\%}
+\textbf{BLEU Score: 32.17\%}
 
 Corpus size: 200 câu test (sampled) \\
 Smoothing: NLTK SmoothingFunction method1
 \end{center}
 \end{tcolorbox}
 
-\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=Model With Attention]
+\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=Model With Attention + Greedy]
 \begin{center}
-\textbf{BLEU Score: 36.57\%}
+\textbf{BLEU Score: 36.24\%}
 
 Corpus size: 200 câu test (sampled) \\
-Improvement: \textbf{+7.45\% (25.6\% relative)}
+Decoding: Greedy (argmax) \\
+Improvement: \textbf{+7.45\% so với Vanilla}
+\end{center}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=orange!5!white, colframe=orange!75!black, title=Model With Attention + Beam Search (Extension đầy đủ)]
+\begin{center}
+\textbf{BLEU Score: 38.04\%}
+
+Corpus size: 200 câu test (sampled) \\
+Decoding: Beam Search (K=5) \\
+Improvement: \textbf{+5.21\% so với Vanilla} \\
+\textit{Đây là cấu hình Extension theo đúng yêu cầu đề bài}
 \end{center}
 \end{tcolorbox}
 
 \textbf{Đánh giá:}
 \begin{itemize}
-    \item [\checkmark] Đạt yêu cầu: BLEU $\geq$ 20\% (theo đề bài)
-    \item [\checkmark] Vanilla model: 29.12\% - Kết quả tốt cho context vector cố định
-    \item [\checkmark] Attention mechanism cải thiện đáng kể: +7.45\% (25.6\% tương đối)
-    \item [!] Vẫn thấp hơn SOTA (Transformer): ~42\% $\rightarrow$ Gap 5.4\%
+    \item [\checkmark] Vanilla + Greedy (Baseline): 32.83\% - Đạt yêu cầu đề bài ($\geq$ 20\%)
+    \item [\checkmark] Attention + Beam Search: 38.04\% - Extension đầy đủ, +5.21\% so với Baseline
+    \item [!] Vẫn thấp hơn SOTA (Transformer): ~42\% $\rightarrow$ Gap ~4\%
 \end{itemize}
 
 \subsection{Phân phối BLEU score}
